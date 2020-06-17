@@ -8,6 +8,6 @@ import pt.tecnico.dsi.cinder.services._
 class CinderClient[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit client: Client[F]) {
 	val uri: Uri = baseUri / "v3"
 
-	val quotas = new Quotas[F](uri, authToken)
+	def quotas(adminProjectId: String) = new Quotas[F](uri / adminProjectId, authToken)
 	val volumes = new Volumes[F](uri, authToken)
 }

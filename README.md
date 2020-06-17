@@ -10,10 +10,8 @@ The Scala client for Openstack Cinder.
 
 Currently supported endpoints:
   
-- :
-  - 
-- :
-  - 
+- [Volumes](https://docs.openstack.org/api-ref/block-storage/v3/index.html?expanded=#volumes-volumes)
+- [Quota sets extension](https://docs.openstack.org/api-ref/block-storage/v3/index.html?expanded=#quota-sets-extension-os-quota-sets)
 
 [Latest scaladoc documentation](https://ist-dsi.github.io/scala-cinder-client/latest/api/pt/tecnico/dsi/scala-cinder-client/index.html)
 

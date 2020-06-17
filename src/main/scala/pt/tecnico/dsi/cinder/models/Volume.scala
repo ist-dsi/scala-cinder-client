@@ -6,7 +6,7 @@ import io.circe.derivation.{deriveCodec, renaming}
 import pt.tecnico.dsi.cinder.CinderClient
 
 object Volume {
-  implicit val codec: Codec.AsObject[Volume] = deriveCodec(renaming.snakeCase, false, None)
+  implicit val codec: Codec.AsObject[Volume] = deriveCodec(renaming.snakeCase)
 
   implicit class WithIdVolumeExtensions[F[_]](volume: WithId[Volume])(implicit client: CinderClient[F], F: Sync[F]) {
 

@@ -3,24 +3,20 @@ package pt.tecnico.dsi.cinder.models
 import cats.effect.Sync
 import cats.syntax.flatMap._
 import fs2.Stream
-import io.circe.Decoder.Result
 import io.circe.syntax._
-import io.circe.{Codec, HCursor, Json}
+import io.circe.{Codec, Decoder, Encoder, HCursor}
 import org.http4s.Uri
 import org.http4s.circe.decodeUri
 import pt.tecnico.dsi.cinder.CinderClient
 
 object WithId {
-  implicit def codec[T: Codec]: Codec[WithId[T]] = new Codec[WithId[T]] {
-    override def apply(a: WithId[T]): Json = a.model.asJson.mapObject(_.add("id", a.id.asJson))
-
-    override def apply(c: HCursor): Result[WithId[T]] =
-      for {
-        id <- c.get[String]("id")
-        link <- c.downField("links").get[Option[Uri]]("self")
-        model <- c.as[T]
-      } yield WithId(id, model, link)
-  }
+  implicit def decoder[T: Decoder]: Decoder[WithId[T]] = (cursor: HCursor) => for {
+    id <- cursor.get[String]("id")
+    link <- cursor.downField("links").get[Option[Uri]]("self")
+    model <- cursor.as[T]
+  } yield WithId(id, model, link)
+  implicit def encoder[T: Encoder]: Encoder[WithId[T]] = (a: WithId[T]) => a.model.asJson.mapObject(_.add("id", a.id.asJson))
+  implicit def codec[T: Codec]: Codec[WithId[T]] = Codec.from(decoder[T], encoder[T])
 
   import scala.language.implicitConversions
   implicit def toModel[T](modelWithId: WithId[T]): T = modelWithId.model

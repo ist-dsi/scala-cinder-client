@@ -36,25 +36,4 @@ final class Volumes[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends
   override def create(domain: Volume): F[WithId[Volume]] = createHandleConflict(domain) { _ =>
     getByName(domain.name).flatMap(existingDomain => update(existingDomain.id, domain))
   }
-
-  /**
-    * Deletes the domain. This also deletes all entities owned by the domain, such as users, groups, and projects, and any credentials
-    * and granted roles that relate to those entities.
-    *
-    * @param id the domain id.
-    * @param force if set to true, the domain will first be disabled and then deleted.
-    */
-  def delete(id: String, force: Boolean = false): F[Unit] = {
-    client.fetch(DELETE(uri / id, authToken)) {
-      case Successful(_) | NotFound(_) => F.pure(())
-      case response =>
-        // If you try to delete an enabled domain, this call returns the Forbidden (403) response code.
-        if (response.status == Forbidden && force) {
-          // If force is set we try again. If that fails then the request is probably really forbidden.
-          disable(id) >> super.delete(id)
-        } else {
-          F.raiseError(UnexpectedStatus(response.status))
-        }
-    }
-  }
 }
