@@ -9,5 +9,5 @@ class CinderClient[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit client:
 	val uri: Uri = baseUri / "v3"
 
 	def quotas(adminProjectId: String) = new Quotas[F](uri / adminProjectId, authToken)
-	val volumes = new Volumes[F](uri, authToken)
+	def volumes(projectId: String) = new Volumes[F](uri / projectId, authToken)
 }

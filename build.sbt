@@ -46,6 +46,7 @@ libraryDependencies ++= Seq("blaze-client", "circe").map { module =>
 } ++ Seq(
   "io.circe"        %% "circe-derivation"      % "0.13.0-M4",
   "org.typelevel"   %% "squants"               % "1.6.0",
+  "com.beachape"    %% "enumeratum-circe"      % "1.6.0",
   "pt.tecnico.dsi"  %% "scala-keystone-client" % "0.1.0-SNAPSHOT" % Test,
   "ch.qos.logback"  %  "logback-classic"       % "1.2.3" % Test,
   "org.scalatest"   %% "scalatest"             % "3.1.1" % Test,

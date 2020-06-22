@@ -3,16 +3,16 @@ package pt.tecnico.dsi.cinder
 import cats.effect.IO
 import org.scalatest.Assertion
 import pt.tecnico.dsi.cinder.models.WithId
-import pt.tecnico.dsi.cinder.services.CRUDService
+import pt.tecnico.dsi.cinder.services.CrudService
 
 abstract class CRUDSpec[T]
-  (val name: String, val service: CinderClient[IO] => CRUDService[IO, T], idempotent: Boolean = true) extends Utils {
+  (val name: String, val service: CinderClient[IO] => CrudService[IO, T], idempotent: Boolean = true) extends Utils {
 
   def stub: IO[T]
 
-  val withSubCreated: IO[(WithId[T], CRUDService[IO, T])] =
+  val withSubCreated: IO[(WithId[T], CrudService[IO, T])] =
     for {
-      client <- scopedClient
+      client <- client
       crudService = service(client)
       expected <- stub
       createdStub <- crudService.create(expected)
@@ -21,7 +21,7 @@ abstract class CRUDSpec[T]
   s"The ${name} service" should {
     s"create ${name}s" in {
       val createIO = for {
-        client <- scopedClient
+        client <- client
         expected <- stub
         createdStub <- service(client).create(expected)
       } yield (createdStub, expected)

@@ -1,55 +1,55 @@
 package pt.tecnico.dsi.cinder.models
 
+import cats.Id
 import cats.instances.either._
 import cats.instances.list._
 import cats.syntax.traverse._
-import io.circe.Decoder.Result
 import io.circe.syntax._
-import io.circe.{Decoder, Encoder, HCursor, DecodingFailure, Codec, JsonObject}
+import io.circe.{Codec, Decoder, DecodingFailure, Encoder, HCursor, JsonObject}
 import squants.information.Information
-import squants.information.InformationConversions._
 
 object Quota {
-  implicit val encoder: Encoder.AsObject[Quota] = (quota: Quota) => {
+  // Its better to have this slightly uglier than to repeat it for the QuotaUsage.
+  private[models] def decoderUsageLike[F[_], T](f: (F[Int], Map[String, F[Int]], F[Int], Map[String, F[Int]], F[Int], F[Int], F[Information], F[Information], F[Information], Map[String, F[Information]]) => T)
+                                               (implicit dFInt: Decoder[F[Int]], dFInformation: Decoder[F[Information]]): Decoder[T] = (cursor: HCursor) => {
+    val allKeys = cursor.keys.map(_.toList).getOrElse(List.empty)
+
+    def extractPerType[R: Decoder](prefix: String): Either[DecodingFailure, Map[String, R]] =
+      allKeys.filter(_.startsWith(prefix)).traverse { key =>
+        cursor.get[R](key).map(key.stripPrefix(prefix) -> _)
+      }.map(_.toMap)
+
+    for {
+      volumes <- cursor.get[F[Int]]("volumes")
+      volumesPerType <- extractPerType[F[Int]]("volumes_")
+      snapshots <- cursor.get[F[Int]]("snapshots")
+      snapshotsPerType <- extractPerType[F[Int]]("snapshots_")
+      backups <- cursor.get[F[Int]]("backups")
+      groups <- cursor.get[F[Int]]("groups")
+      maxVolumeSize <- cursor.get[F[Information]]("perVolume")
+      backupsStorage <- cursor.get[F[Information]]("backup")
+      volumesStorage <- cursor.get[F[Information]]("gigabytes")
+      volumesStoragePerType <- extractPerType[F[Information]]("gigabytes_")
+    } yield f(volumes, volumesPerType, snapshots, snapshotsPerType, backups, groups, maxVolumeSize, backupsStorage, volumesStorage, volumesStoragePerType)
+  }
+
+  val encoder: Encoder.AsObject[Quota] = (quota: Quota) => {
     val base = Map(
       "volume" -> quota.volumes.asJson,
       "snapshots" -> quota.snapshots.asJson,
       "backups" -> quota.backups.asJson,
       "groups" -> quota.groups.asJson,
-      "per_volume_gigabytes" -> quota.maxVolumeSize.toGigabytes.ceil.toInt.asJson,
-      "gigabytes" -> quota.volumesStorage.toGigabytes.ceil.toInt.asJson,
-      "backup_gigabytes" -> quota.backupsStorage.toGigabytes.ceil.toInt.asJson,
+      "per_volume_gigabytes" -> quota.maxVolumeSize.asJson,
+      "gigabytes" -> quota.volumesStorage.asJson,
+      "backup_gigabytes" -> quota.backupsStorage.asJson,
     )
     val volumesPerType = quota.volumesPerType.map { case (tpe, value) => s"volumes_$tpe" -> value.asJson }
     val snapshotsPerType = quota.snapshotsPerType.map { case (tpe, value) => s"snapshots_$tpe" -> value.asJson }
-    val gigabytesPerType = quota.volumesStoragePerType.map { case (tpe, value) => s"gigabytes_$tpe" -> value.toGigabytes.ceil.toInt.asJson }
+    val gigabytesPerType = quota.volumesStoragePerType.map { case (tpe, value) => s"gigabytes_$tpe" -> value.asJson }
     JsonObject.fromMap(base ++ volumesPerType ++ snapshotsPerType ++ gigabytesPerType)
   }
-  implicit val decoder: Decoder[Quota] = new Decoder[Quota] {
-    def extractPerType(cursor: HCursor, allKeys: List[String], prefix: String): Either[DecodingFailure, Map[String, Int]] =
-      allKeys.filter(_.startsWith(prefix)).traverse { key =>
-        cursor.get[Int](key).map(key.stripPrefix(prefix) -> _)
-      }.map(_.toMap)
 
-    override def apply(cursor: HCursor): Result[Quota] = {
-      val allKeys = cursor.keys.map(_.toList).getOrElse(List.empty)
-      for {
-        volumes <- cursor.get[Int]("volumes")
-        volumesPerType <- extractPerType(cursor, allKeys, "volumes_")
-        snapshots <- cursor.get[Int]("snapshots")
-        snapshotsPerType <- extractPerType(cursor, allKeys, "snapshots_")
-        backups <- cursor.get[Int]("backups")
-        groups <- cursor.get[Int]("groups")
-        maxVolumeSize <- cursor.get[Int]("perVolume").map(_.gigabytes)
-        backupsStorage <- cursor.get[Int]("backup").map(_.gigabytes)
-        volumesStorage <- cursor.get[Int]("gigabytes").map(_.gigabytes)
-        volumesStoragePerTypeInt <- extractPerType(cursor, allKeys, "gigabytes_")
-        volumesStoragePerType = volumesStoragePerTypeInt.view.mapValues(_.gigabytes).toMap
-      } yield Quota(volumes, volumesPerType, snapshots, snapshotsPerType, backups, groups, maxVolumeSize, backupsStorage, volumesStorage, volumesStoragePerType)
-    }
-  }
-
-  implicit val codec: Codec.AsObject[Quota] = Codec.AsObject.from(decoder, encoder)
+  implicit val codec: Codec.AsObject[Quota] = Codec.AsObject.from(decoderUsageLike[Id, Quota](Quota.apply), encoder)
 }
 
 /**
@@ -65,15 +65,15 @@ object Quota {
   * @param volumesStorage size of volumes and snapshots that are allowed for each project.
   * @param volumesStoragePerType size of volumes and snapshots per volume type that are allowed for each project.
   */
-case class Quota(
+final case class Quota(
   volumes: Int,
-  volumesPerType: Map[String, Int],
+  volumesPerType: Map[String, Int] = Map.empty,
   snapshots: Int,
-  snapshotsPerType: Map[String, Int],
+  snapshotsPerType: Map[String, Int] = Map.empty,
   backups: Int,
   groups: Int,
   maxVolumeSize: Information,
   backupsStorage: Information,
   volumesStorage: Information,
-  volumesStoragePerType: Map[String, Information]
+  volumesStoragePerType: Map[String, Information] = Map.empty,
 )
