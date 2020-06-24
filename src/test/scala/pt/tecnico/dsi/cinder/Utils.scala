@@ -15,6 +15,7 @@ import org.scalatest.exceptions.TestFailedException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
 import pt.tecnico.dsi.keystone.KeystoneClient
+import pt.tecnico.dsi.keystone.models.Scope.Project
 import pt.tecnico.dsi.keystone.models.{CatalogEntry, Interface, ScopedSession}
 
 abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
@@ -39,10 +40,14 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
   val client: IO[CinderClient[IO]] = for {
     keystone <- keystoneClient
     // Keystone should be smarter and not require us to do this cast
-    catalog = keystone.session.asInstanceOf[ScopedSession].catalog
-    cinderUrlOpt = catalog.collectFirst { case entry @ CatalogEntry("blockstorage", _, _, _) => entry.urlOf(sys.env("OS_REGION_NAME"), Interface.Public) }.flatten
-    cinderUrl <- IO.fromEither(cinderUrlOpt.toRight(new Throwable("Could not find \"blockstorage\" service in the catalog")))
-  } yield new CinderClient[IO](Uri.unsafeFromString(cinderUrl), keystone.authToken)
+    session = keystone.session.asInstanceOf[ScopedSession]
+    cinderUrlOpt = session.catalog.collectFirst { case entry @ CatalogEntry("volumev3", _, _, _) => entry.urlOf(sys.env("OS_REGION_NAME"), Interface.Public) }
+    cinderUrl <- IO.fromEither(cinderUrlOpt.flatten.toRight(new Throwable("Could not find \"volumev3\" service in the catalog")))
+    // Since we performed a scoped authentication to the admin project openstack tries to be clever and returns the cinder public url already
+    // scoped to that project. That is: instead of returning "https://somehost.com:8776/v3", it returns "https://somehost.com:8776/v3/<admin-project-id>"
+    // So we need to drop the admin-project-id
+    adminProjectId = session.scope.asInstanceOf[Project].project.id.get
+  } yield new CinderClient[IO](Uri.unsafeFromString(cinderUrl.stripSuffix(s"/$adminProjectId")), keystone.authToken)
 
   implicit class RichIO[T](io: IO[T]) {
     def value(test: T => Assertion): IO[Assertion] = io.map(test)

@@ -7,7 +7,7 @@ import pt.tecnico.dsi.cinder.models.{Quota, QuotaUsage, WithId}
 
 final class Quotas[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends Service[F](authToken) {
   val uri: Uri = baseUri / "os-quota-sets"
-  val name = "quota-set"
+  val name = "quota_set"
 
   /**
     * Shows quotas for a project.

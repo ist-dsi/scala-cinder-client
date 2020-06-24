@@ -20,7 +20,8 @@ abstract class AsymmetricCrudService[F[_]: Sync: Client, Model: Decoder](baseUri
   val pluralName = s"${name}s"
   val uri: Uri = baseUri / pluralName
 
-  def list(query: Query = Query.empty): Stream[F, WithId[Model]] = super.list[WithId[Model]](pluralName, uri, query)
+  def list(): Stream[F, WithId[Model]] = super.list[WithId[Model]](pluralName, uri, Query.empty)
+  def list(query: Query): Stream[F, WithId[Model]] = super.list[WithId[Model]](pluralName, uri, query)
 
   def create(value: Create)(implicit encoder: Encoder[Create]): F[WithId[Model]] =
     super.create(uri, value, wrappedAt = Some(name))

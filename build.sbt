@@ -74,7 +74,8 @@ Test / testGrouping := {
 
 // http://www.scalatest.org/user_guide/using_the_runner
 //   -o[configs...] - causes test results to be written to the standard output. The D configs shows all durations.
-testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oD")
+// -F shows the complete stack trace in case of exception thrown.
+testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF")
 
 // ======================================================================================================================
 // ==== Scaladoc ========================================================================================================
