@@ -10,7 +10,7 @@ import squants.information.Information
 
 object Quota {
   // Its better to have this slightly uglier than to repeat it for the QuotaUsage.
-  private[models] def decoderUsageLike[F[_], T](f: (F[Int], Map[String, F[Int]], F[Int], Map[String, F[Int]], F[Int], F[Int], F[Information], F[Information], F[Information], Map[String, F[Information]]) => T)
+  private[models] def decoder[F[_], T](f: (F[Int], Map[String, F[Int]], F[Int], Map[String, F[Int]], F[Int], F[Int], F[Information], F[Information], F[Information], Map[String, F[Information]]) => T)
                                                (implicit dFInt: Decoder[F[Int]], dFInformation: Decoder[F[Information]]): Decoder[T] = (cursor: HCursor) => {
     val allKeys = cursor.keys.map(_.toList).getOrElse(List.empty)
 
@@ -49,7 +49,7 @@ object Quota {
     JsonObject.fromMap(base ++ volumesPerType ++ snapshotsPerType ++ gigabytesPerType)
   }
 
-  implicit val codec: Codec.AsObject[Quota] = Codec.AsObject.from(decoderUsageLike[Id, Quota](Quota.apply), encoder)
+  implicit val codec: Codec.AsObject[Quota] = Codec.AsObject.from(decoder[Id, Quota](Quota.apply), encoder)
 }
 
 /**

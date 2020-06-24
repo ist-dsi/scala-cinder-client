@@ -12,7 +12,7 @@ object WithId {
     model <- cursor.as[T]
   } yield WithId(id, model, link)
   implicit def encoder[T: Encoder]: Encoder[WithId[T]] = (a: WithId[T]) => a.model.asJson.mapObject(_.add("id", a.id.asJson))
-  implicit def codec[T: Codec]: Codec[WithId[T]] = Codec.from(decoder[T], encoder[T])
+  implicit def codec[T: Codec]: Codec[WithId[T]] = Codec.from(decoder, encoder)
 
   import scala.language.implicitConversions
   implicit def toModel[T](modelWithId: WithId[T]): T = modelWithId.model

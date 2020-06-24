@@ -4,7 +4,7 @@ import io.circe.Decoder
 import squants.information.Information
 
 object QuotaUsage {
-  implicit val decoder: Decoder[QuotaUsage] = Quota.decoderUsageLike[Usage, QuotaUsage](QuotaUsage.apply)
+  implicit val decoder: Decoder[QuotaUsage] = Quota.decoder[Usage, QuotaUsage](QuotaUsage.apply)
 }
 /**
   * A value of -1 means no limit.

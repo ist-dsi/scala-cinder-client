@@ -31,18 +31,18 @@ abstract class Service[F[_]](protected val authToken: Header)(implicit protected
       encoder.mapJson(originalJson => Json.obj(name -> originalJson))
     })
 
-  protected def expectUnwrapped[R: Decoder](request: F[Request[F]], wrappedAt: Option[String] = None): F[R] =
+  protected def expectUnwrapped[R: Decoder](request: F[Request[F]], wrappedAt: Option[String]): F[R] =
     client.expect(request)(unwrapped(wrappedAt))
 
   protected def get[R: Decoder](uri: Uri, wrappedAt: Option[String] = None): F[R] =
     expectUnwrapped(GET(uri, authToken), wrappedAt)
 
-  protected def update[V: Encoder, R: Decoder](uri: Uri, value: V, wrappedAt: Option[String] = None): F[R] = {
+  protected def update[V: Encoder, R: Decoder](uri: Uri, value: V, wrappedAt: Option[String]): F[R] = {
     implicit val e: EntityEncoder[F, V] = wrapped(wrappedAt)
     expectUnwrapped(PATCH(value, uri, authToken), wrappedAt)
   }
 
-  protected def create[V: Encoder, R: Decoder](uri: Uri, value: V, wrappedAt: Option[String] = None): F[R] = {
+  protected def create[V: Encoder, R: Decoder](uri: Uri, value: V, wrappedAt: Option[String]): F[R] = {
     implicit val e: EntityEncoder[F, V] = wrapped(wrappedAt)
     expectUnwrapped(POST(value, uri, authToken), wrappedAt)
   }
