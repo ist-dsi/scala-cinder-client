@@ -15,7 +15,7 @@ object WithId {
   implicit def codec[T: Codec]: Codec[WithId[T]] = Codec.from(decoder, encoder)
 
   import scala.language.implicitConversions
-  implicit def toModel[T](modelWithId: WithId[T]): T = modelWithId.model
+  implicit def toModel[T](withId: WithId[T]): T = withId.model
 }
 // All Openstack IDs are strings, 99% are random UUIDs
 case class WithId[T](id: String, model: T, link: Option[Uri])

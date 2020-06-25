@@ -9,20 +9,20 @@ import org.http4s.Status.{Gone, NotFound, Successful}
 import org.http4s.circe.decodeUri
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.client.{Client, UnexpectedStatus}
-import org.http4s.Method.{DELETE, GET, PATCH, POST}
-import org.http4s.{EntityDecoder, EntityEncoder, Header, Query, Request, Uri, circe}
+import org.http4s.Method.{DELETE, GET, PATCH, POST, PUT, PermitsBody}
+import org.http4s.{EntityDecoder, EntityEncoder, Header, Method, Query, Request, Uri, circe}
 
 abstract class Service[F[_]](protected val authToken: Header)(implicit protected val client: Client[F], protected val F: Sync[F]) {
   protected val dsl = new Http4sClientDsl[F] {}
   import dsl._
 
-  private val jsonPrinter: Printer = Printer.noSpaces.copy(dropNullValues = true)
-  implicit def jsonEncoder[A: Encoder]: EntityEncoder[F, A] = circe.jsonEncoderWithPrinterOf(jsonPrinter)
-  implicit def jsonDecoder[A: Decoder]: EntityDecoder[F, A] = circe.accumulatingJsonOf
+  protected  val jsonPrinter: Printer = Printer.noSpaces.copy(dropNullValues = true)
+  protected implicit def jsonEncoder[A: Encoder]: EntityEncoder[F, A] = circe.jsonEncoderWithPrinterOf(jsonPrinter)
+  protected implicit def jsonDecoder[A: Decoder]: EntityDecoder[F, A] = circe.accumulatingJsonOf
 
   // Without this decoding to Unit wont work. This makes the EntityDecoder[F, Unit] defined in EntityDecoder companion object
   // have a higher priority than the jsonDecoder defined above. https://github.com/http4s/http4s/issues/2806
-  implicit val void: EntityDecoder[F, Unit] = EntityDecoder.void
+  protected implicit val void: EntityDecoder[F, Unit] = EntityDecoder.void
 
   protected def unwrapped[R](at: Option[String] = None)(implicit decoder: Decoder[R]): EntityDecoder[F, R] =
     jsonDecoder(at.fold(decoder)(decoder.at))
@@ -34,18 +34,24 @@ abstract class Service[F[_]](protected val authToken: Header)(implicit protected
   protected def expectUnwrapped[R: Decoder](request: F[Request[F]], wrappedAt: Option[String]): F[R] =
     client.expect(request)(unwrapped(wrappedAt))
 
+  protected def expect[V: Encoder, R: Decoder](method: Method with PermitsBody, value: V, uri: Uri, wrappedAt: Option[String]): F[R] = {
+    implicit val e: EntityEncoder[F, V] = wrapped(wrappedAt)
+    expectUnwrapped(method.apply(value, uri, authToken), wrappedAt)
+  }
+  protected def expect[R: Decoder](method: Method with PermitsBody, uri: Uri, wrappedAt: Option[String]): F[R] =
+    expectUnwrapped(method.apply(uri, authToken), wrappedAt)
+
   protected def get[R: Decoder](uri: Uri, wrappedAt: Option[String] = None): F[R] =
-    expectUnwrapped(GET(uri, authToken), wrappedAt)
+    expect(GET, uri, wrappedAt)
 
-  protected def update[V: Encoder, R: Decoder](uri: Uri, value: V, wrappedAt: Option[String]): F[R] = {
-    implicit val e: EntityEncoder[F, V] = wrapped(wrappedAt)
-    expectUnwrapped(PATCH(value, uri, authToken), wrappedAt)
-  }
+  protected def put[V: Encoder, R: Decoder](value: V, uri: Uri, wrappedAt: Option[String]): F[R] =
+    expect(PUT, value, uri, wrappedAt)
 
-  protected def create[V: Encoder, R: Decoder](uri: Uri, value: V, wrappedAt: Option[String]): F[R] = {
-    implicit val e: EntityEncoder[F, V] = wrapped(wrappedAt)
-    expectUnwrapped(POST(value, uri, authToken), wrappedAt)
-  }
+  protected def patch[V: Encoder, R: Decoder](value: V, uri: Uri, wrappedAt: Option[String]): F[R] =
+    expect(PATCH, value, uri, wrappedAt)
+
+  protected def post[V: Encoder, R: Decoder](value: V, uri: Uri, wrappedAt: Option[String]): F[R] =
+    expect(POST, value, uri, wrappedAt)
 
   protected def list[R: Decoder](baseKey: String, uri: Uri, query: Query): Stream[F, R] = {
     implicit val paginatedDecoder: Decoder[(Option[Uri], List[R])] = (c: HCursor) => for {

@@ -7,7 +7,7 @@
     </appender>
 
     <logger name="org.scalatest" level="debug" />
-    <logger name="org.http4s" level="error" />
+    <logger name="org.http4s" level="info" />
 
     <root level="debug">
         <!-- <appender-ref ref="FILE"/> -->

@@ -1,11 +1,13 @@
 package pt.tecnico.dsi.cinder.models
 
 import cats.Id
+import cats.arrow.FunctionK
 import cats.instances.either._
 import cats.instances.list._
 import cats.syntax.traverse._
 import io.circe.syntax._
 import io.circe.{Codec, Decoder, DecodingFailure, Encoder, HCursor, JsonObject}
+import pt.tecnico.dsi.cinder.models.Volume.Create
 import squants.information.Information
 
 object Quota {
@@ -32,24 +34,37 @@ object Quota {
       volumesStoragePerType <- extractPerType[F[Information]]("gigabytes_")
     } yield f(volumes, volumesPerType, snapshots, snapshotsPerType, backups, groups, maxVolumeSize, backupsStorage, volumesStorage, volumesStoragePerType)
   }
+  implicit val decoder: Decoder[Quota] = decoder[Id, Quota](Quota.apply)
 
-  val encoder: Encoder.AsObject[Quota] = (quota: Quota) => {
-    val base = Map(
-      "volume" -> quota.volumes.asJson,
-      "snapshots" -> quota.snapshots.asJson,
-      "backups" -> quota.backups.asJson,
-      "groups" -> quota.groups.asJson,
-      "per_volume_gigabytes" -> quota.maxVolumeSize.asJson,
-      "gigabytes" -> quota.volumesStorage.asJson,
-      "backup_gigabytes" -> quota.backupsStorage.asJson,
-    )
-    val volumesPerType = quota.volumesPerType.map { case (tpe, value) => s"volumes_$tpe" -> value.asJson }
-    val snapshotsPerType = quota.snapshotsPerType.map { case (tpe, value) => s"snapshots_$tpe" -> value.asJson }
-    val gigabytesPerType = quota.volumesStoragePerType.map { case (tpe, value) => s"gigabytes_$tpe" -> value.asJson }
-    JsonObject.fromMap(base ++ volumesPerType ++ snapshotsPerType ++ gigabytesPerType)
+  object Update {
+    implicit val encoder: Encoder.AsObject[Update] = (quota: Update) => {
+      val base = Map(
+        "volumes" -> quota.volumes.asJson,
+        "snapshots" -> quota.snapshots.asJson,
+        "backups" -> quota.backups.asJson,
+        "groups" -> quota.groups.asJson,
+        "per_volume_gigabytes" -> quota.maxVolumeSize.asJson,
+        "gigabytes" -> quota.volumesStorage.asJson,
+        "backup_gigabytes" -> quota.backupsStorage.asJson,
+      )
+      val volumesPerType = quota.volumesPerType.map { case (tpe, value) => s"volumes_$tpe" -> value.asJson }
+      val snapshotsPerType = quota.snapshotsPerType.map { case (tpe, value) => s"snapshots_$tpe" -> value.asJson }
+      val gigabytesPerType = quota.volumesStoragePerType.map { case (tpe, value) => s"gigabytes_$tpe" -> value.asJson }
+      JsonObject.fromMap(base ++ volumesPerType ++ snapshotsPerType ++ gigabytesPerType)
+    }
   }
-
-  implicit val codec: Codec.AsObject[Quota] = Codec.AsObject.from(decoder[Id, Quota](Quota.apply), encoder)
+  final case class Update(
+    volumes: Option[Int] = None,
+    volumesPerType: Map[String, Int] = Map.empty,
+    snapshots: Option[Int] = None,
+    snapshotsPerType: Map[String, Int] = Map.empty,
+    backups: Option[Int] = None,
+    groups: Option[Int] = None,
+    maxVolumeSize: Option[Information] = None,
+    backupsStorage: Option[Information] = None,
+    volumesStorage: Option[Information] = None,
+    volumesStoragePerType: Map[String, Information] = Map.empty,
+  )
 }
 
 /**

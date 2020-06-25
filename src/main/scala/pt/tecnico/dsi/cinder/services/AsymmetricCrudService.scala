@@ -20,11 +20,11 @@ abstract class AsymmetricCrudService[F[_]: Sync: Client, Model: Decoder](baseUri
   val pluralName = s"${name}s"
   val uri: Uri = baseUri / pluralName
 
-  def list(): Stream[F, WithId[Model]] = super.list[WithId[Model]](pluralName, uri, Query.empty)
+  def list(): Stream[F, WithId[Model]] = list(Query.empty)
   def list(query: Query): Stream[F, WithId[Model]] = super.list[WithId[Model]](pluralName, uri, query)
 
   def create(value: Create)(implicit encoder: Encoder[Create]): F[WithId[Model]] =
-    super.create(uri, value, wrappedAt = Some(name))
+    super.post(value, uri, wrappedAt = Some(name))
 
   protected def createHandleConflict(value: Create)(onConflict: Response[F] => F[WithId[Model]])
                                     (implicit encoder: Encoder[Create]): F[WithId[Model]] = {
@@ -40,7 +40,7 @@ abstract class AsymmetricCrudService[F[_]: Sync: Client, Model: Decoder](baseUri
   def get(id: String): F[WithId[Model]] = super.get(uri / id, wrappedAt = Some(name))
 
   def update(id: String, value: Update)(implicit d: Encoder[Update]): F[WithId[Model]] =
-    super.update(uri / id, value, wrappedAt = Some(name))
+    super.patch(value, uri / id, wrappedAt = Some(name))
 
   def delete(value: WithId[Model]): F[Unit] = delete(value.id)
   def delete(id: String): F[Unit] = super.delete(uri / id)
