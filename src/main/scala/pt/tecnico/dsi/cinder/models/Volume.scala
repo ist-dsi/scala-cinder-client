@@ -7,16 +7,16 @@ import squants.information.Information
 
 object Volume {
   implicit val decoder: Decoder[Volume] = (cursor: HCursor) => for {
-    name <- cursor.get[String]("name")
-    tpe <- cursor.get[Option[String]]("volume_type")
-    status <- cursor.get[VolumeStatus]("status")
     size <- cursor.get[Information]("size")
+    status <- cursor.get[VolumeStatus]("status")
     userId <- cursor.get[String]("user_id")
-    projectId <- cursor.get[String]("os-vol-tenant-attr:tenant_id")
+    projectId <- cursor.get[Option[String]]("os-vol-tenant-attr:tenant_id")
+    name <- cursor.get[Option[String]]("name")
     description <- cursor.get[Option[String]]("description")
+    tpe <- cursor.get[Option[String]]("volume_type")
     createdAt <- cursor.get[LocalDateTime]("created_at")
     updatedAt <- cursor.get[Option[LocalDateTime]]("updated_at")
-    availabilityZone <- cursor.get[Option[String]]("availability_zone")
+    availabilityZone <- cursor.get[String]("availability_zone")
     encrypted <- cursor.get[Boolean]("encrypted")
     multiAttach <- cursor.get[Boolean]("multiattach")
     // Yes, in the Json it is a boolean inside a string :facepalm:
@@ -38,8 +38,8 @@ object Volume {
     attachments <- cursor.get[List[Attachment]]("attachments")
     metadata <- cursor.get[JsonObject]("metadata")
     volumeImageMetadata <- cursor.get[Option[Map[String, String]]]("volume_image_metadata")
-    links <- cursor.get[List[Links]]("links")
-  } yield new Volume(name, tpe, status, size, userId, projectId, description, createdAt, updatedAt, availabilityZone,
+    links <- cursor.get[List[Link]]("links")
+  } yield new Volume(size, status, userId, projectId, name, description, tpe, createdAt, updatedAt, availabilityZone,
     encrypted, multiAttach, bootable, snapshotId, sourceVolumeId, consistencyGroupId, host, backendVolumeId,
     replicationStatus, migrationStatus, attachments, metadata, volumeImageMetadata, links)
 
@@ -71,7 +71,7 @@ object Volume {
     */
   case class Create(
     size: Information,
-    availabilityZone: Option[String],
+    availabilityZone: Option[String] = None,
     name: Option[String] = None,
     description: Option[String] = None,
     multiAttach: Boolean = false,
@@ -128,16 +128,16 @@ object Volume {
   * @param links               the volume links.
   */
 case class Volume(
-  name: String,
-  `type`: Option[String] = None,
-  status: VolumeStatus,
   size: Information,
+  status: VolumeStatus,
   userId: String,
-  projectId: String,
+  projectId: Option[String] = None,
+  name: Option[String] = None,
   description: Option[String] = None,
+  `type`: Option[String] = None,
   createdAt: LocalDateTime,
   updatedAt: Option[LocalDateTime] = None,
-  availabilityZone: Option[String],
+  availabilityZone: String,
   encrypted: Boolean,
   multiAttach: Boolean = false,
   bootable: Boolean,
@@ -151,5 +151,5 @@ case class Volume(
   attachments: List[Attachment] = List.empty,
   metadata: JsonObject = JsonObject.empty,
   volumeImageMetadata: Option[Map[String, String]] = None,
-  links: List[Links] = List.empty
+  links: List[Link] = List.empty
 )

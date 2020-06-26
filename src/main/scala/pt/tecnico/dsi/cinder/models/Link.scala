@@ -5,7 +5,7 @@ import io.circe.derivation.deriveCodec
 import org.http4s.Uri
 import org.http4s.circe.{decodeUri, encodeUri}
 
-object Links {
-  implicit val codec: Codec.AsObject[Links] = deriveCodec
+object Link {
+  implicit val codec: Codec.AsObject[Link] = deriveCodec
 }
-case class Links(href: Uri, rel: String)
+case class Link(rel: String, href: Uri)
