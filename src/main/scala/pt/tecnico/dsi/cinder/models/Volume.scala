@@ -38,10 +38,9 @@ object Volume {
     attachments <- cursor.get[List[Attachment]]("attachments")
     metadata <- cursor.get[JsonObject]("metadata")
     volumeImageMetadata <- cursor.get[Option[Map[String, String]]]("volume_image_metadata")
-    links <- cursor.get[List[Link]]("links")
   } yield new Volume(size, status, userId, projectId, name, description, tpe, createdAt, updatedAt, availabilityZone,
     encrypted, multiAttach, bootable, snapshotId, sourceVolumeId, consistencyGroupId, host, backendVolumeId,
-    replicationStatus, migrationStatus, attachments, metadata, volumeImageMetadata, links)
+    replicationStatus, migrationStatus, attachments, metadata, volumeImageMetadata)
 
   object Create {
     implicit val encoder: Encoder[Create] = Encoder.forProduct12(
@@ -125,7 +124,6 @@ object Volume {
   * @param metadata            metadata that is associated with the volume.
   * @param volumeImageMetadata list of image metadata entries. Only included for volumes that were created from an
   *                            image, or from a snapshot of a volume originally created from an image.
-  * @param links               the volume links.
   */
 case class Volume(
   size: Information,
@@ -151,5 +149,4 @@ case class Volume(
   attachments: List[Attachment] = List.empty,
   metadata: JsonObject = JsonObject.empty,
   volumeImageMetadata: Option[Map[String, String]] = None,
-  links: List[Link] = List.empty
 )

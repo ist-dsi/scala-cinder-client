@@ -13,7 +13,7 @@ import squants.information.Information
 object Quota {
   // Its better to have this slightly uglier than to repeat it for the QuotaUsage.
   private[models] def decoder[F[_], T](f: (F[Int], Map[String, F[Int]], F[Int], Map[String, F[Int]], F[Int], F[Int], F[Information], F[Information], F[Information], Map[String, F[Information]]) => T)
-                                               (implicit dFInt: Decoder[F[Int]], dFInformation: Decoder[F[Information]]): Decoder[T] = (cursor: HCursor) => {
+                                      (implicit dFInt: Decoder[F[Int]], dFInformation: Decoder[F[Information]]): Decoder[T] = (cursor: HCursor) => {
     val allKeys = cursor.keys.map(_.toList).getOrElse(List.empty)
 
     def extractPerType[R: Decoder](prefix: String): Either[DecodingFailure, Map[String, R]] =

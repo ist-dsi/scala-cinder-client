@@ -6,4 +6,4 @@ import io.circe.derivation.deriveDecoder
 object VolumeSummary {
   implicit val decoder: Decoder[VolumeSummary] = deriveDecoder
 }
-case class VolumeSummary(name: Option[String] = None, links: List[Link] = List.empty)
+case class VolumeSummary(name: Option[String] = None)

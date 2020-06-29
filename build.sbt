@@ -11,6 +11,7 @@ scalacOptions ++= Seq(
   "-encoding", "utf-8",            // Specify character encoding used by source files.
   "-explaintypes",                 // Explain type errors in more detail.
   "-feature",                      // Emit warning and location for usages of features that should be imported explicitly.
+  "-language:higherKinds",         // Just to help Intellij, otherwise he keeps asking to import/enable the higherKinds flag
   "-Ybackend-parallelism", "8",    // Maximum worker threads for backend.
   "-Ybackend-worker-queue", "10",  // Backend threads worker queue size.
   "-Ymacro-annotations",           // Enable support for macro annotations, formerly in macro paradise.
@@ -27,8 +28,6 @@ scalacOptions ++= Seq(
   //"-Woctal-literal",               // Warn on obsolete octal syntax.
   "-Wvalue-discard",               // Warn when non-Unit expression results are unused.
   "-Wunused:_",                    // Enables every warning of unused members/definitions/etc
-  // https://github.com/scala/bug/issues/11980
-  "-Wconf:cat=unused-privates&site=pt\\.tecnico\\.dsi\\.keystone\\.models\\.auth\\..*:silent"
 )
 
 // These lines ensure that in sbt console or sbt test:console the -Ywarn* and the -Xfatal-warning are not bothersome.
@@ -53,8 +52,6 @@ libraryDependencies ++= Seq("blaze-client", "circe").map { module =>
 )
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
-//coverageEnabled := true
-
 // ======================================================================================================================
 // ==== Testing =========================================================================================================
 // ======================================================================================================================
@@ -73,8 +70,9 @@ Test / testGrouping := {
 }
 
 // http://www.scalatest.org/user_guide/using_the_runner
-//   -o[configs...] - causes test results to be written to the standard output. The D configs shows all durations.
-// -F shows the complete stack trace in case of exception thrown.
+//   -o[configs...] - causes test results to be written to the standard output.
+//      D - show all durations
+//      F - show full stack traces
 testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF")
 
 // ======================================================================================================================

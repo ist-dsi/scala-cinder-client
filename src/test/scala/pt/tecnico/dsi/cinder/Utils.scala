@@ -34,8 +34,8 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
 
   override protected def afterAll(): Unit = finalizer.unsafeRunSync()
 
-  implicit val httpClient: Client[IO] = Logger(logBody = true, logHeaders = true)(_httpClient)
-  //implicit val httpClient: Client[IO] = _httpClient
+  //implicit val httpClient: Client[IO] = Logger(logBody = true, logHeaders = true)(_httpClient)
+  implicit val httpClient: Client[IO] = _httpClient
 
   //TODO: fix the fact that we are reauthenticating in every test. Change to only be once per suite
 
