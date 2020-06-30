@@ -1,4 +1,4 @@
-package pt.tecnico.dsi.cinder
+package pt.tecnico.dsi.openstack.cinder
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
@@ -9,15 +9,15 @@ import cats.syntax.traverse._
 import org.http4s.Uri
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
-import org.http4s.client.middleware.Logger
+//import org.http4s.client.middleware.Logger
 import org.log4s._
 import org.scalatest._
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
-import pt.tecnico.dsi.keystone.KeystoneClient
-import pt.tecnico.dsi.keystone.models.Scope.Project
-import pt.tecnico.dsi.keystone.models.{CatalogEntry, Interface}
+import pt.tecnico.dsi.openstack.keystone.KeystoneClient
+import pt.tecnico.dsi.openstack.keystone.models.Scope.Project
+import pt.tecnico.dsi.openstack.keystone.models.{CatalogEntry, Interface}
 
 abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
   val logger: Logger = getLogger

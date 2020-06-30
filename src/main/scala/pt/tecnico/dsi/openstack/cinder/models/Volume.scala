@@ -1,4 +1,4 @@
-package pt.tecnico.dsi.cinder.models
+package pt.tecnico.dsi.openstack.cinder.models
 
 import java.time.LocalDateTime
 import io.circe.{Decoder, DecodingFailure, Encoder, HCursor, JsonObject}

@@ -1,9 +1,9 @@
-package pt.tecnico.dsi.cinder
+package pt.tecnico.dsi.openstack.cinder
 
 import cats.effect.Sync
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import pt.tecnico.dsi.cinder.services._
+import pt.tecnico.dsi.openstack.cinder.services._
 
 class CinderClient[F[_]: Sync](baseUri: Uri, authToken: Header)(implicit client: Client[F]) {
 	val uri: Uri = if (baseUri.path.endsWith("v3") || baseUri.path.endsWith("v3/")) baseUri else baseUri / "v3"

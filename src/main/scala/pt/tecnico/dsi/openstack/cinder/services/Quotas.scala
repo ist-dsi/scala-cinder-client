@@ -1,15 +1,14 @@
-package pt.tecnico.dsi.cinder.services
+package pt.tecnico.dsi.openstack.cinder.services
 
 import cats.effect.Sync
 import io.circe.Encoder
-import org.http4s.Method.PUT
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import pt.tecnico.dsi.cinder.models.{Quota, QuotaUsage, WithId}
+import pt.tecnico.dsi.openstack.cinder.models.{Quota, QuotaUsage}
+import pt.tecnico.dsi.openstack.common.models.WithId
+import pt.tecnico.dsi.openstack.common.services.Service
 
 final class Quotas[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends Service[F](authToken) {
-  import dsl._
-
   val uri: Uri = baseUri / "os-quota-sets"
   val name = "quota_set"
 
@@ -23,7 +22,7 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends 
     * Shows quota usage for a project.
     * @param projectId The UUID of the project.
     */
-  def getUsage(projectId: String): F[WithId[QuotaUsage]] = super.get(uri / projectId +?("usage", true), wrappedAt = Some(name))
+  def getUsage(projectId: String): F[WithId[QuotaUsage]] = super.get((uri / projectId).+?("usage", true), wrappedAt = Some(name))
 
   /**
     * Gets default quotas for a project.

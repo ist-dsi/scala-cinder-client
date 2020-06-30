@@ -1,13 +1,11 @@
-package pt.tecnico.dsi.cinder.models
+package pt.tecnico.dsi.openstack.cinder.models
 
 import cats.Id
-import cats.arrow.FunctionK
 import cats.instances.either._
 import cats.instances.list._
 import cats.syntax.traverse._
 import io.circe.syntax._
-import io.circe.{Codec, Decoder, DecodingFailure, Encoder, HCursor, JsonObject}
-import pt.tecnico.dsi.cinder.models.Volume.Create
+import io.circe.{Decoder, DecodingFailure, Encoder, HCursor, JsonObject}
 import squants.information.Information
 
 object Quota {

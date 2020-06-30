@@ -1,4 +1,4 @@
-package pt.tecnico.dsi.cinder
+package pt.tecnico.dsi.openstack.cinder
 
 import io.circe.{Decoder, Encoder}
 import squants.information.Information

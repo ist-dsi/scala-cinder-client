@@ -1,13 +1,13 @@
-package pt.tecnico.dsi.cinder
+package pt.tecnico.dsi.openstack.cinder
 
-import cats.effect.IO
-import cats.syntax.flatMap._
-import pt.tecnico.dsi.cinder.models.{Volume, VolumeStatus, WithId}
-import squants.information.InformationConversions._
 import scala.concurrent.duration.DurationInt
+import cats.effect.IO
 import org.scalatest.{Assertion, OptionValues}
-import pt.tecnico.dsi.cinder.models.VolumeStatus.{Available, Creating}
-import pt.tecnico.dsi.cinder.services.Volumes
+import pt.tecnico.dsi.openstack.cinder.models.Volume
+import pt.tecnico.dsi.openstack.cinder.models.VolumeStatus.{Available, Creating}
+import pt.tecnico.dsi.openstack.cinder.services.Volumes
+import pt.tecnico.dsi.openstack.common.models.WithId
+import squants.information.InformationConversions._
 
 class VolumesSpec extends Utils with OptionValues {
   def withStubVolume(name: String)(f: (Volumes[IO], String, Volume.Create, WithId[Volume]) => IO[Assertion]): IO[Assertion] =

@@ -1,8 +1,8 @@
-package pt.tecnico.dsi.cinder
+package pt.tecnico.dsi.openstack.cinder
 
 import cats.effect.IO
-import pt.tecnico.dsi.cinder.models.Quota
-import pt.tecnico.dsi.keystone.models.Project
+import pt.tecnico.dsi.openstack.cinder.models.Quota
+import pt.tecnico.dsi.openstack.keystone.models.Project
 import squants.information.InformationConversions._
 
 class QuotasSpec extends Utils {

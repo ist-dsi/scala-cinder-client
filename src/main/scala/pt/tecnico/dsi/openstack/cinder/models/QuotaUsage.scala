@@ -1,6 +1,7 @@
-package pt.tecnico.dsi.cinder.models
+package pt.tecnico.dsi.openstack.cinder.models
 
 import io.circe.Decoder
+import pt.tecnico.dsi.openstack.common.models.Usage
 import squants.information.Information
 
 object QuotaUsage {

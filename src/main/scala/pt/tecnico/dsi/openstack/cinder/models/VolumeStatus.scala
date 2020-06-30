@@ -1,4 +1,4 @@
-package pt.tecnico.dsi.cinder.models
+package pt.tecnico.dsi.openstack.cinder.models
 
 import enumeratum.{Enum, EnumEntry}
 import io.circe.derivation.renaming
