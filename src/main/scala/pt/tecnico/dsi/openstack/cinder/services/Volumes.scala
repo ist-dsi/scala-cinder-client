@@ -24,8 +24,7 @@ final class Volumes[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
  *
     * @param query extra query params to pass in the request.
     */
-  def listSummary(query: Query = Query.empty): Stream[F, WithId[VolumeSummary]] =
-    super.list[WithId[VolumeSummary]](pluralName, uri, query)
+  def listSummary(query: Query = Query.empty): Stream[F, WithId[VolumeSummary]] = super.list[WithId[VolumeSummary]](pluralName, uri, query)
 
   override def list(query: Query): Stream[F, WithId[Volume]] = super.list[WithId[Volume]](pluralName, uri / "detail", query)
 

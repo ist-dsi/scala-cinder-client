@@ -3,7 +3,8 @@
 [![Latest version](https://index.scala-lang.org/ist-dsi/scala-cinder-client/scala-cinder-client/latest.svg)](https://index.scala-lang.org/ist-dsi/scala-cinder-client/scala-cinder-client)
 
 [![Build Status](https://travis-ci.org/ist-dsi/scala-cinder-client.svg?branch=master&style=plastic&maxAge=604800)](https://travis-ci.org/ist-dsi/scala-cinder-client)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/)](https://www.codacy.com/app/IST-DSI/scala-cinder-client?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ist-dsi/scala-vault&amp;utm_campaign=Badge_Grade)
+
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/7a2c07e0d5d64bb38d7bea9294fc7eb2)](https://www.codacy.com/gh/ist-dsi/scala-cinder-client?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ist-dsi/scala-cinder-client&amp;utm_campaign=Badge_Grade)
 [![BCH compliance](https://bettercodehub.com/edge/badge/ist-dsi/scala-cinder-client)](https://bettercodehub.com/results/ist-dsi/scala-cinder-client)
 
 The Scala client for Openstack Cinder.
