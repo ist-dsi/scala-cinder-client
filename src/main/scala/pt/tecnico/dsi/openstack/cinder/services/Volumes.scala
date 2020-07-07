@@ -17,7 +17,7 @@ final class Volumes[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
     * @note this method is not idempotent! The Openstack API creates a new Volume every time.
     * @param volume the volume create options.
     */
-  override def create(volume: Volume.Create): F[WithId[Volume]] = super.create(volume)
+  override def create(volume: Volume.Create, extraHeaders: Header*): F[WithId[Volume]] = super.create(volume, extraHeaders:_*)
 
   /**
     * Lists summary information for all Block Storage volumes that the project can access.
@@ -26,7 +26,7 @@ final class Volumes[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
     */
   def listSummary(query: Query = Query.empty): Stream[F, WithId[VolumeSummary]] = super.list[WithId[VolumeSummary]](pluralName, uri, query)
 
-  override def list(query: Query): Stream[F, WithId[Volume]] = super.list[WithId[Volume]](pluralName, uri / "detail", query)
+  override def list(query: Query, extraHeaders: Header*): Stream[F, WithId[Volume]] = super.list[WithId[Volume]](pluralName, uri / "detail", query, extraHeaders:_*)
 
   /**
     * Deletes a volume.

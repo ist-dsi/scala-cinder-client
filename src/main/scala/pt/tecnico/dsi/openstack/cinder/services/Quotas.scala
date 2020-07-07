@@ -16,26 +16,26 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends 
     * Shows quotas for a project.
     * @param projectId The UUID of the project.
     */
-  def get(projectId: String): F[WithId[Quota]] = super.get(uri / projectId, wrappedAt = Some(name))
+  def get(projectId: String): F[WithId[Quota]] = super.get(wrappedAt = Some(name), uri / projectId)
 
   /**
     * Shows quota usage for a project.
     * @param projectId The UUID of the project.
     */
-  def getUsage(projectId: String): F[WithId[QuotaUsage]] = super.get((uri / projectId).+?("usage", true), wrappedAt = Some(name))
+  def getUsage(projectId: String): F[WithId[QuotaUsage]] = super.get(wrappedAt = Some(name), (uri / projectId).+?("usage", true))
 
   /**
     * Gets default quotas for a project.
     * @param projectId The UUID of the project.
     */
-  def getDefaults(projectId: String): F[WithId[Quota]] = super.get(uri / projectId / "defaults", wrappedAt = Some(name))
+  def getDefaults(projectId: String): F[WithId[Quota]] = super.get(wrappedAt = Some(name), uri / projectId / "defaults")
 
   /**
     * Updates quotas for a project.
     * @param projectId The UUID of the project.
     */
   def update(projectId: String, quotas: Quota.Update)(implicit encoder: Encoder[Quota.Update]): F[Quota] =
-    super.put(quotas, uri / projectId, wrappedAt = Some(name))
+    super.put(wrappedAt = Some(name), quotas, uri / projectId)
 
   /**
     * Deletes quotas for a project so the quotas revert to default values.
