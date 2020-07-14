@@ -3,10 +3,17 @@ language: scala
 scala:
   - 2.13.3
 
-services: docker
+# We are using this because its the only environment with IPv6
+os: linux
+arch: arm64
+dist: bionic
 
 jdk:
   - openjdk11
+
+# To ensure we use the latest SNAPSHOTS
+env:
+  - COURSIER_TTL="1h"
 
 before_cache:
   - rm -fv $HOME/.ivy2/.sbt.ivy.lock
@@ -22,9 +29,6 @@ cache:
 before_script:
   - source openrc-cinder.sh
 
-script:
-  - sbt -Dsbt.color=true compile
-  - sbt -Dsbt.color=true coverage test
+script: sbt -Dsbt.color=true clean coverage test
 
-after_success:
-  - sbt coverageReport codacyCoverage
+after_success: sbt -Dsbt.color=true coverageReport codacyCoverage

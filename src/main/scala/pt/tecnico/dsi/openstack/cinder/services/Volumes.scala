@@ -26,7 +26,8 @@ final class Volumes[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
     */
   def listSummary(query: Query = Query.empty): Stream[F, WithId[VolumeSummary]] = super.list[WithId[VolumeSummary]](pluralName, uri, query)
 
-  override def list(query: Query, extraHeaders: Header*): Stream[F, WithId[Volume]] = super.list[WithId[Volume]](pluralName, uri / "detail", query, extraHeaders:_*)
+  override def list(query: Query, extraHeaders: Header*): Stream[F, WithId[Volume]] =
+    super.list[WithId[Volume]](pluralName, uri / "detail", query, extraHeaders:_*)
 
   /**
     * Deletes a volume.
