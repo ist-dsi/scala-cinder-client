@@ -5,7 +5,6 @@ import io.circe.Encoder
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
 import pt.tecnico.dsi.openstack.cinder.models.{Quota, QuotaUsage}
-import pt.tecnico.dsi.openstack.common.models.WithId
 import pt.tecnico.dsi.openstack.common.services.Service
 
 final class Quotas[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends Service[F](authToken) {
@@ -14,21 +13,24 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends 
 
   /**
     * Shows quotas for a project.
+    * Cinder always returns a Quota even if the project does not exist. That is why there is no method called `get`.
     * @param projectId The UUID of the project.
     */
-  def get(projectId: String): F[WithId[Quota]] = super.get(wrappedAt = Some(name), uri / projectId)
+  def apply(projectId: String): F[Quota] = super.get(wrappedAt = Some(name), uri / projectId)
 
   /**
     * Shows quota usage for a project.
+    * Cinder always returns a Quota even if the project does not exist. That is why there is no method called `getUsage`.
     * @param projectId The UUID of the project.
     */
-  def getUsage(projectId: String): F[WithId[QuotaUsage]] = super.get(wrappedAt = Some(name), (uri / projectId).+?("usage", true))
+  def applyUsage(projectId: String): F[QuotaUsage] = super.get(wrappedAt = Some(name), (uri / projectId).+?("usage", true))
 
   /**
     * Gets default quotas for a project.
+    * Cinder always returns a Quota even if the project does not exist. That is why there is no method called `getDefaults`.
     * @param projectId The UUID of the project.
     */
-  def getDefaults(projectId: String): F[WithId[Quota]] = super.get(wrappedAt = Some(name), uri / projectId / "defaults")
+  def applyDefaults(projectId: String): F[Quota] = super.get(wrappedAt = Some(name), uri / projectId / "defaults")
 
   /**
     * Updates quotas for a project.

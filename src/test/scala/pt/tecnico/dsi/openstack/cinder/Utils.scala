@@ -15,11 +15,10 @@ import org.scalatest._
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
-import pt.tecnico.dsi.openstack.common.models.WithId
 import pt.tecnico.dsi.openstack.keystone.KeystoneClient
 import pt.tecnico.dsi.openstack.keystone.models.{CatalogEntry, Interface, Project, Scope}
 
-abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
+abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll with OptionValues with EitherValues {
   val logger: Logger = getLogger
 
   implicit override def executionContext = ExecutionContext.global
@@ -56,12 +55,12 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
   def randomName(): String = random.alphanumeric.take(10).mkString.dropWhile(_.isDigit).toLowerCase
   def withRandomName[T](f: String => IO[T]): IO[T] = IO.delay(randomName()).flatMap(f)
 
-  val withStubProject: Resource[IO, WithId[Project]] = {
-    val create = withRandomName(name => keystone.projects.create(Project(name, "dummy project", "default")))
+  val withStubProject: Resource[IO, Project] = {
+    val create = withRandomName(name => keystone.projects.create(Project.Create(name)))
     Resource.make(create)(project => keystone.projects.delete(project))
   }
 
-  val adminProject: IO[WithId[Project]] = keystone.projects.get("admin", keystone.session.user.domainId)
+  val adminProject: IO[Project] = keystone.projects.get("admin", keystone.session.user.domainId)
 
   implicit class RichIO[T](io: IO[T]) {
     def idempotently(test: T => Assertion, repetitions: Int = 3): IO[Assertion] = {
