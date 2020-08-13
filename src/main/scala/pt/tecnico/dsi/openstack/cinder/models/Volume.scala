@@ -3,10 +3,12 @@ package pt.tecnico.dsi.openstack.cinder.models
 import java.time.LocalDateTime
 import io.circe.{Decoder, DecodingFailure, Encoder, HCursor, JsonObject}
 import io.circe.derivation.deriveEncoder
+import pt.tecnico.dsi.openstack.common.models.{Link, Identifiable}
 import squants.information.Information
 
 object Volume {
   implicit val decoder: Decoder[Volume] = (cursor: HCursor) => for {
+    id <- cursor.get[String]("id")
     size <- cursor.get[Information]("size")
     status <- cursor.get[VolumeStatus]("status")
     userId <- cursor.get[String]("user_id")
@@ -38,9 +40,10 @@ object Volume {
     attachments <- cursor.get[List[Attachment]]("attachments")
     metadata <- cursor.get[JsonObject]("metadata")
     volumeImageMetadata <- cursor.get[Option[Map[String, String]]]("volume_image_metadata")
-  } yield new Volume(size, status, userId, projectId, name, description, tpe, createdAt, updatedAt, availabilityZone,
+    links <- cursor.get[List[Link]]("links")
+  } yield new Volume(id, size, status, userId, projectId, name, description, tpe, createdAt, updatedAt, availabilityZone,
     encrypted, multiAttach, bootable, snapshotId, sourceVolumeId, consistencyGroupId, host, backendVolumeId,
-    replicationStatus, migrationStatus, attachments, metadata, volumeImageMetadata)
+    replicationStatus, migrationStatus, attachments, metadata, volumeImageMetadata, links)
 
   object Create {
     implicit val encoder: Encoder[Create] = Encoder.forProduct12(
@@ -126,6 +129,7 @@ object Volume {
   *                            image, or from a snapshot of a volume originally created from an image.
   */
 case class Volume(
+  id: String,
   size: Information,
   status: VolumeStatus,
   userId: String,
@@ -149,4 +153,5 @@ case class Volume(
   attachments: List[Attachment] = List.empty,
   metadata: JsonObject = JsonObject.empty,
   volumeImageMetadata: Option[Map[String, String]] = None,
-)
+  links: List[Link] = List.empty,
+) extends Identifiable

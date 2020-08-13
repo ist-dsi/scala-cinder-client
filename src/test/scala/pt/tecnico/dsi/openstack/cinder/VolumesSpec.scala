@@ -4,14 +4,12 @@ import scala.concurrent.duration.DurationInt
 import cats.effect.{IO, Resource}
 import org.scalatest.{Assertion, OptionValues}
 import pt.tecnico.dsi.openstack.cinder.models.Volume
-import pt.tecnico.dsi.openstack.cinder.models.VolumeStatus.{Available, Creating}
 import pt.tecnico.dsi.openstack.cinder.services.Volumes
-import pt.tecnico.dsi.openstack.common.models.WithId
 import pt.tecnico.dsi.openstack.keystone.models.Project
 import squants.information.InformationConversions._
 
 class VolumesSpec extends Utils with OptionValues {
-  val withStubVolume: Resource[IO, (Volumes[IO], WithId[Project], Volume.Create, WithId[Volume])] = {
+  val withStubVolume: Resource[IO, (Volumes[IO], Project, Volume.Create, Volume)] = {
     val create = withRandomName { name =>
       val volumeCreate = Volume.Create(1.gibibytes, name = Some(name), description = Some("a description"))
       for {
@@ -53,18 +51,20 @@ class VolumesSpec extends Utils with OptionValues {
       volumes.list().compile.toList.idempotently { volumes =>
         val createdVolumeInList = volumes.find(_.id == volume.id)
         createdVolumeInList.value.projectId.value shouldBe adminProject.id
-        createdVolumeInList.value.status should (equal (Available) or equal(Creating))
       }
     }
-    "get a volume" in withStubVolume.use[IO, Assertion] { case (volumes, adminProject, volumeCreate, volume) =>
+    "get a volume (existing id)" in withStubVolume.use[IO, Assertion] { case (volumes, adminProject, volumeCreate, volume) =>
       volumes.get(volume.id).idempotently { vol =>
-        vol.id shouldBe volume.id
-        vol.description shouldBe volumeCreate.description
-        vol.name shouldBe volumeCreate.name
-        vol.availabilityZone shouldBe "nova"
-        vol.projectId.value shouldBe adminProject.id
-        vol.size shouldBe volumeCreate.size
+        vol.value.id shouldBe volume.id
+        vol.value.description shouldBe volumeCreate.description
+        vol.value.name shouldBe volumeCreate.name
+        vol.value.availabilityZone shouldBe "nova"
+        vol.value.projectId.value shouldBe adminProject.id
+        vol.value.size shouldBe volumeCreate.size
       }
+    }
+    "get a volume (non-existing id)" in withStubVolume.use[IO, Assertion] { case (volumes, _, _, _) =>
+      volumes.get("non-existing-id").idempotently(_ shouldBe None)
     }
   }
 }
