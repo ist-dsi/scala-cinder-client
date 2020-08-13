@@ -41,7 +41,7 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
 
   val cinder: CinderClient[IO] = {
     val cinderUrl = keystone.session.catalog.collectFirst {
-      case entry @ CatalogEntry("volumev3", _, _, _) => entry.urlOf(sys.env("OS_REGION_NAME"), Interface.Public)
+      case entry @ CatalogEntry("volumev3", _, _, _) => entry.urlOf(Interface.Public, sys.env("OS_REGION_NAME"))
     }.flatten.getOrElse(throw new Exception("Could not find \"volumev3\" service in the catalog"))
     // Since we performed a scoped authentication to the admin project openstack tries to be clever and returns the cinder public url already
     // scoped to that project. That is: instead of returning "https://somehost.com:8776/v3", it returns "https://somehost.com:8776/v3/<admin-project-id>"
