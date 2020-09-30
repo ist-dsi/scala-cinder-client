@@ -1,50 +1,15 @@
 package pt.tecnico.dsi.openstack.cinder.models
 
 import java.time.LocalDateTime
-import io.circe.{Decoder, DecodingFailure, Encoder, HCursor, JsonObject}
-import io.circe.derivation.deriveEncoder
-import pt.tecnico.dsi.openstack.common.models.{Link, Identifiable}
+import cats.effect.Sync
+import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
+import io.circe.{Decoder, Encoder, JsonObject}
+import pt.tecnico.dsi.openstack.common.models.{Identifiable, Link}
+import pt.tecnico.dsi.openstack.keystone.KeystoneClient
+import pt.tecnico.dsi.openstack.keystone.models.{Project, User}
 import squants.information.Information
 
 object Volume {
-  implicit val decoder: Decoder[Volume] = (cursor: HCursor) => for {
-    id <- cursor.get[String]("id")
-    size <- cursor.get[Information]("size")
-    status <- cursor.get[VolumeStatus]("status")
-    userId <- cursor.get[String]("user_id")
-    projectId <- cursor.get[Option[String]]("os-vol-tenant-attr:tenant_id")
-    name <- cursor.get[Option[String]]("name")
-    description <- cursor.get[Option[String]]("description")
-    tpe <- cursor.get[Option[String]]("volume_type")
-    createdAt <- cursor.get[LocalDateTime]("created_at")
-    updatedAt <- cursor.get[Option[LocalDateTime]]("updated_at")
-    availabilityZone <- cursor.get[String]("availability_zone")
-    encrypted <- cursor.get[Boolean]("encrypted")
-    multiAttach <- cursor.get[Boolean]("multiattach")
-    // Yes, in the Json it is a boolean inside a string :facepalm:
-    bootable <- cursor.get[String]("bootable").map(_.toLowerCase).flatMap {
-      case "true" => Right(true)
-      case "false" => Right(false)
-      case b => Left(DecodingFailure(s"Cannot decode $b to a Boolean", cursor.downField("bootable").history))
-    }
-    snapshotId <- cursor.get[Option[String]]("snapshot_id")
-    sourceVolumeId <- cursor.get[Option[String]]("source_volid")
-    consistencyGroupId <- cursor.get[Option[String]]("consistencygroup_id")
-    host <- cursor.get[Option[String]]("os-vol-host-attr:host")
-    backendVolumeId <- cursor.get[Option[String]]("os-vol-mig-status-attr:name_id")
-    replicationStatus <- cursor.get[Option[VolumeStatus]]("replication_status")
-    // There are two fields for this: "migration_status" and "os-vol-mig-status-attr:migstat"
-    // "migration_status" is only for admins, "os-vol-mig-status-attr:migstat" seems to always be present and have the
-    // same value as the "migration_status"
-    migrationStatus <- cursor.get[Option[VolumeStatus]]("os-vol-mig-status-attr:migstat")
-    attachments <- cursor.get[List[Attachment]]("attachments")
-    metadata <- cursor.get[JsonObject]("metadata")
-    volumeImageMetadata <- cursor.get[Option[Map[String, String]]]("volume_image_metadata")
-    links <- cursor.get[List[Link]]("links")
-  } yield new Volume(id, size, status, userId, projectId, name, description, tpe, createdAt, updatedAt, availabilityZone,
-    encrypted, multiAttach, bootable, snapshotId, sourceVolumeId, consistencyGroupId, host, backendVolumeId,
-    replicationStatus, migrationStatus, attachments, metadata, volumeImageMetadata, links)
-
   object Create {
     implicit val encoder: Encoder[Create] = Encoder.forProduct12(
       "size", "availability_zone", "name", "description", "multiattach", "source_volid", "snapshot_id", "backup_id",
@@ -87,7 +52,7 @@ object Volume {
   )
 
   object Update {
-    implicit val encoder: Encoder[Update] = deriveEncoder
+    implicit val encoder: Encoder[Update] = deriveEncoder(renaming.snakeCase)
   }
 
   /**
@@ -100,6 +65,26 @@ object Volume {
     description: Option[String] = None,
     metadata: Map[String, String] = Map.empty,
   )
+
+  implicit val decoder: Decoder[Volume] = deriveDecoder[Volume](Map(
+    "projectId" -> "os-vol-tenant-attr:tenant_id",
+    "type" -> "volume_type",
+    "multiAttach" -> "multiattach",
+    "sourceVolumeId" -> "source_volid",
+    "consistencyGroupId" -> "consistencygroup_id",
+    "host" -> "os-vol-host-attr:host",
+    "backendVolumeId" -> "os-vol-mig-status-attr:name_id",
+    // There are two fields for this: "migration_status" and "os-vol-mig-status-attr:migstat"
+    // "migration_status" is only for admins, "os-vol-mig-status-attr:migstat" seems to always be present and have the
+    // same value as the "migration_status"
+    "migrationStatus" -> "os-vol-mig-status-attr:migstat",
+  ).withDefault(renaming.snakeCase)).prepare(_.withFocus(_ mapObject{ obj =>
+    import io.circe.syntax._
+    val key = "bootable"
+    // Yes, in the Json it is a boolean inside a string :facepalm:
+    val value: Boolean = obj(key).flatMap(_.asString).flatMap(_.toBooleanOption).getOrElse(false)
+    obj.add(key, value.asJson)
+  }))
 }
 
 /**
@@ -110,8 +95,6 @@ object Volume {
   * @param userId              the UUID of the user.
   * @param projectId           the project ID which the volume belongs to.
   * @param description         the volume description.
-  * @param createdAt           the date and time when the resource was created.
-  * @param updatedAt           the date and time when the resource was updated.
   * @param availabilityZone    the name of the availability zone.
   * @param encrypted           whether this volume is encrypted.
   * @param multiAttach         whether this volume can attach to more than one instance.
@@ -125,6 +108,8 @@ object Volume {
   * @param migrationStatus     the status of this volume migration.
   * @param attachments         instance attachment information.
   * @param metadata            metadata that is associated with the volume.
+  * @param createdAt           the date and time when the resource was created.
+  * @param updatedAt           the date and time when the resource was updated.
   * @param volumeImageMetadata list of image metadata entries. Only included for volumes that were created from an
   *                            image, or from a snapshot of a volume originally created from an image.
   */
@@ -137,8 +122,6 @@ case class Volume(
   name: Option[String] = None,
   description: Option[String] = None,
   `type`: Option[String] = None,
-  createdAt: LocalDateTime,
-  updatedAt: Option[LocalDateTime] = None,
   availabilityZone: String,
   encrypted: Boolean,
   multiAttach: Boolean = false,
@@ -153,5 +136,13 @@ case class Volume(
   attachments: List[Attachment] = List.empty,
   metadata: JsonObject = JsonObject.empty,
   volumeImageMetadata: Option[Map[String, String]] = None,
+  createdAt: LocalDateTime,
+  updatedAt: Option[LocalDateTime] = None,
   links: List[Link] = List.empty,
-) extends Identifiable
+) extends Identifiable {
+  def user[F[_]: Sync](implicit keystone: KeystoneClient[F]): F[User] = keystone.users(userId)
+  def project[F[_]: Sync](implicit keystone: KeystoneClient[F]): F[Option[Project]] = projectId match {
+    case None => Sync[F].pure(Option.empty)
+    case Some(id) => keystone.projects.get(id)
+  }
+}

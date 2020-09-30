@@ -7,7 +7,6 @@ import scala.util.Random
 import cats.effect.{ContextShift, IO, Resource, Timer}
 import cats.instances.list._
 import cats.syntax.traverse._
-import org.http4s.Uri
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.log4s._
@@ -15,8 +14,10 @@ import org.scalatest._
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
+import pt.tecnico.dsi.openstack.common.models.Identifiable
+import pt.tecnico.dsi.openstack.common.services.CrudService
 import pt.tecnico.dsi.openstack.keystone.KeystoneClient
-import pt.tecnico.dsi.openstack.keystone.models.{CatalogEntry, Interface, Project, Scope}
+import pt.tecnico.dsi.openstack.keystone.models.Project
 
 abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll with OptionValues with EitherValues {
   val logger: Logger = getLogger
@@ -38,29 +39,21 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
   implicit val httpClient: Client[IO] = _httpClient
 
   val keystone: KeystoneClient[IO] = KeystoneClient.fromEnvironment().unsafeRunSync()
-
-  val cinder: CinderClient[IO] = {
-    val cinderUrl = keystone.session.catalog.collectFirst {
-      case entry @ CatalogEntry("volumev3", _, _, _) => entry.urlOf(Interface.Public, sys.env("OS_REGION_NAME"))
-    }.flatten.getOrElse(throw new Exception("Could not find \"volumev3\" service in the catalog"))
-    // Since we performed a scoped authentication to the admin project openstack tries to be clever and returns the cinder public url already
-    // scoped to that project. That is: instead of returning "https://somehost.com:8776/v3", it returns "https://somehost.com:8776/v3/<admin-project-id>"
-    // So we need to drop the admin-project-id
-    val adminProjectId = keystone.session.scope.asInstanceOf[Scope.Project].id
-    new CinderClient[IO](Uri.unsafeFromString(cinderUrl.stripSuffix(s"/$adminProjectId")), keystone.authToken)
-  }
+  val cinder: CinderClient[IO] = keystone.session.clientBuilder[IO](CinderClient, sys.env("OS_REGION_NAME"))
+    .fold(s => throw new Exception(s), identity)
 
   // Not very purely functional :(
   val random = new Random()
   def randomName(): String = random.alphanumeric.take(10).mkString.dropWhile(_.isDigit).toLowerCase
   def withRandomName[T](f: String => IO[T]): IO[T] = IO.delay(randomName()).flatMap(f)
 
-  val withStubProject: Resource[IO, Project] = {
-    val create = withRandomName(name => keystone.projects.create(Project.Create(name)))
-    Resource.make(create)(project => keystone.projects.delete(project))
+  def resourceCreator[R <: Identifiable, Create](service: CrudService[IO, R, Create, _])(create: String => Create): Resource[IO, R] = {
+    Resource.make(withRandomName(name => service(create(name))))(model => service.delete(model.id))
   }
 
-  val adminProject: IO[Project] = keystone.projects.get("admin", keystone.session.user.domainId)
+  val withStubProject: Resource[IO, Project] = resourceCreator(keystone.projects)(Project.Create(_))
+
+  val adminProject: IO[Project] = keystone.projects("admin", keystone.session.user.domainId)
 
   implicit class RichIO[T](io: IO[T]) {
     def idempotently(test: T => Assertion, repetitions: Int = 3): IO[Assertion] = {

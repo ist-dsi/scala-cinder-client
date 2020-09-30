@@ -6,9 +6,10 @@ import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
 import pt.tecnico.dsi.openstack.cinder.models.{Volume, VolumeSummary}
 import pt.tecnico.dsi.openstack.common.services.CrudService
+import pt.tecnico.dsi.openstack.keystone.models.Session
 
-final class Volumes[F[_]: Sync: Client](baseUri: Uri, authToken: Header)
-  extends CrudService[F, Volume, Volume.Create, Volume.Update](baseUri, "volume", authToken) {
+final class Volumes[F[_]: Sync: Client](baseUri: Uri, session: Session)
+  extends CrudService[F, Volume, Volume.Create, Volume.Update](baseUri, "volume", session.authToken) {
 
   /**
     * Creates a new volume.

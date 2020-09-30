@@ -39,12 +39,11 @@ scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value
 // ==== Dependencies ====================================================================================================
 // ======================================================================================================================
 libraryDependencies ++= Seq(
-  "pt.tecnico.dsi"  %% "scala-openstack-common-clients" % "0.2.0-SNAPSHOT",
+  "pt.tecnico.dsi"  %% "scala-keystone-client" % "0.4.0-SNAPSHOT",
   "org.typelevel"   %% "squants"               % "1.7.0",
   "com.beachape"    %% "enumeratum-circe"      % "1.6.1",
-  "pt.tecnico.dsi"  %% "scala-keystone-client" % "0.2.0-SNAPSHOT" % Test,
   "ch.qos.logback"  %  "logback-classic"       % "1.2.3" % Test,
-  "org.scalatest"   %% "scalatest"             % "3.2.1" % Test,
+  "org.scalatest"   %% "scalatest"             % "3.2.2" % Test,
 )
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
