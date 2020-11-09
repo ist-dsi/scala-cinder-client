@@ -42,13 +42,13 @@ class VolumesSpec extends Utils with OptionValues {
       delete.idempotently(_ shouldBe ())
     }
     "list summary volumes" in withStubVolume.use[IO, Assertion] { case (volumes, _, volumeCreate, volume) =>
-      volumes.listSummary().compile.toList.idempotently { volumesSummary =>
+      volumes.listSummary().idempotently { volumesSummary =>
         volumesSummary.exists(_.id == volume.id) shouldBe true
         volumesSummary.exists(_.name == volumeCreate.name) shouldBe true
       }
     }
     "list volumes" in withStubVolume.use[IO, Assertion] { case (volumes, adminProject, _, volume) =>
-      volumes.list().compile.toList.idempotently { volumes =>
+      volumes.list().idempotently { volumes =>
         val createdVolumeInList = volumes.find(_.id == volume.id)
         createdVolumeInList.value.projectId.value shouldBe adminProject.id
       }
