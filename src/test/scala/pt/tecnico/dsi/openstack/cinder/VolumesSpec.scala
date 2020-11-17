@@ -1,7 +1,9 @@
 package pt.tecnico.dsi.openstack.cinder
 
+import scala.annotation.nowarn
 import scala.concurrent.duration.DurationInt
 import cats.effect.{IO, Resource}
+import cats.syntax.show._
 import org.scalatest.{Assertion, OptionValues}
 import pt.tecnico.dsi.openstack.cinder.models.Volume
 import pt.tecnico.dsi.openstack.cinder.services.Volumes
@@ -65,6 +67,12 @@ class VolumesSpec extends Utils with OptionValues {
     }
     "get a volume (non-existing id)" in withStubVolume.use[IO, Assertion] { case (volumes, _, _, _) =>
       volumes.get("non-existing-id").idempotently(_ shouldBe None)
+    }
+
+    s"show volumes" in withStubVolume.use[IO, Assertion] { case (_, _, _, model) =>
+      //This line is a fail fast mechanism, and prevents false positives from the linter
+      println(show"$model")
+      IO("""show"$model"""" should compile): @nowarn
     }
   }
 }

@@ -1,5 +1,6 @@
 package pt.tecnico.dsi.openstack.cinder.models
 
+import cats.Show
 import enumeratum.{Enum, EnumEntry}
 import io.circe.derivation.renaming
 import io.circe.{Decoder, Encoder}
@@ -36,4 +37,6 @@ case object VolumeStatus extends Enum[VolumeStatus] { self =>
   case object Uploading extends VolumeStatus
 
   val values = findValues
+
+  implicit val show: Show[VolumeStatus] = Show.fromToString
 }

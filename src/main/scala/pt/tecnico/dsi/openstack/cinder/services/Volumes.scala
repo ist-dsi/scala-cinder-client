@@ -47,7 +47,7 @@ final class Volumes[F[_]: Sync: Client](baseUri: Uri, session: Session)
     * @param force indicates whether to force delete a volume even if the volume is in deleting or error_deleting.
     */
   def delete(id: String, cascade: Boolean = false, force: Boolean = false): F[Unit] =
-    super.delete((uri / id).+?("cascade", cascade).+?("force", force))
+    super.delete((uri / id).withQueryParam("cascade", cascade).withQueryParam("force", force))
 
   /** This method throws a NotImplementedError. */
   override def defaultResolveConflict(existing: Volume, create: Volume.Create, keepExistingElements: Boolean, extraHeaders: Seq[Header]): F[Volume] = ???

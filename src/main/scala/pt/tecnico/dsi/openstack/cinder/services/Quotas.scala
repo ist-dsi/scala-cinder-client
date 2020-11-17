@@ -24,7 +24,8 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, session: Session) extends S
     * Cinder always returns a Quota even if the project does not exist. That is why there is no method called `getUsage`.
     * @param projectId The UUID of the project.
     */
-  def applyUsage(projectId: String): F[QuotaUsage] = super.get(wrappedAt = Some(name), (uri / projectId).+?("usage", true))
+  def applyUsage(projectId: String): F[QuotaUsage] = super.get(wrappedAt =
+    Some(name), (uri / projectId).withQueryParam("usage", true))
 
   /**
     * Gets default quotas for a project.

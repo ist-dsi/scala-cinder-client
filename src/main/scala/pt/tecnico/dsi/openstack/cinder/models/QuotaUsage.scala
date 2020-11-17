@@ -1,11 +1,14 @@
 package pt.tecnico.dsi.openstack.cinder.models
 
+import cats.derived
+import cats.derived.ShowPretty
 import io.circe.Decoder
 import pt.tecnico.dsi.openstack.common.models.Usage
 import squants.information.Information
 
 object QuotaUsage {
   implicit val decoder: Decoder[QuotaUsage] = Quota.decoder[Usage, QuotaUsage](QuotaUsage.apply)
+  implicit val show: ShowPretty[QuotaUsage] = derived.semiauto.showPretty
 }
 /**
   * A value of -1 means no limit.

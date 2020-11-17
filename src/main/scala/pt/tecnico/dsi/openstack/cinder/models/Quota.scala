@@ -1,17 +1,50 @@
 package pt.tecnico.dsi.openstack.cinder.models
 
-import cats.Id
+import cats.derived.ShowPretty
 import cats.instances.either._
 import cats.instances.list._
 import cats.syntax.traverse._
+import cats.{Id, derived}
 import io.circe.syntax._
-import io.circe.{Decoder, DecodingFailure, Encoder, HCursor, JsonObject}
+import io.circe._
 import squants.information.Information
 
 object Quota {
+  object Update {
+    implicit val encoder: Encoder.AsObject[Update] = (quota: Update) => {
+      val base = Map(
+        "volumes" -> quota.volumes.asJson,
+        "snapshots" -> quota.snapshots.asJson,
+        "backups" -> quota.backups.asJson,
+        "groups" -> quota.groups.asJson,
+        "per_volume_gigabytes" -> quota.maxVolumeSize.asJson,
+        "gigabytes" -> quota.volumesStorage.asJson,
+        "backup_gigabytes" -> quota.backupsStorage.asJson,
+      )
+      val volumesPerType = quota.volumesPerType.map { case (tpe, value) => s"volumes_$tpe" -> value.asJson }
+      val snapshotsPerType = quota.snapshotsPerType.map { case (tpe, value) => s"snapshots_$tpe" -> value.asJson }
+      val gigabytesPerType = quota.volumesStoragePerType.map { case (tpe, value) => s"gigabytes_$tpe" -> value.asJson }
+      JsonObject.fromMap(base ++ volumesPerType ++ snapshotsPerType ++ gigabytesPerType)
+    }
+
+    implicit val show: ShowPretty[Update] = derived.semiauto.showPretty
+  }
+  final case class Update(
+    volumes: Option[Int] = None,
+    volumesPerType: Map[String, Int] = Map.empty,
+    snapshots: Option[Int] = None,
+    snapshotsPerType: Map[String, Int] = Map.empty,
+    backups: Option[Int] = None,
+    groups: Option[Int] = None,
+    maxVolumeSize: Option[Information] = None,
+    backupsStorage: Option[Information] = None,
+    volumesStorage: Option[Information] = None,
+    volumesStoragePerType: Map[String, Information] = Map.empty,
+  )
+
   // Its better to have this slightly uglier than to repeat it for the QuotaUsage.
   private[models] def decoder[F[_], T](f: (F[Int], Map[String, F[Int]], F[Int], Map[String, F[Int]], F[Int], F[Int], F[Information], F[Information], F[Information], Map[String, F[Information]]) => T)
-                                      (implicit dFInt: Decoder[F[Int]], dFInformation: Decoder[F[Information]]): Decoder[T] = (cursor: HCursor) => {
+    (implicit dFInt: Decoder[F[Int]], dFInformation: Decoder[F[Information]]): Decoder[T] = (cursor: HCursor) => {
     val allKeys = cursor.keys.map(_.toList).getOrElse(List.empty)
 
     def extractPerType[R: Decoder](prefix: String): Either[DecodingFailure, Map[String, R]] =
@@ -34,35 +67,7 @@ object Quota {
   }
   implicit val decoder: Decoder[Quota] = decoder[Id, Quota](Quota.apply)
 
-  object Update {
-    implicit val encoder: Encoder.AsObject[Update] = (quota: Update) => {
-      val base = Map(
-        "volumes" -> quota.volumes.asJson,
-        "snapshots" -> quota.snapshots.asJson,
-        "backups" -> quota.backups.asJson,
-        "groups" -> quota.groups.asJson,
-        "per_volume_gigabytes" -> quota.maxVolumeSize.asJson,
-        "gigabytes" -> quota.volumesStorage.asJson,
-        "backup_gigabytes" -> quota.backupsStorage.asJson,
-      )
-      val volumesPerType = quota.volumesPerType.map { case (tpe, value) => s"volumes_$tpe" -> value.asJson }
-      val snapshotsPerType = quota.snapshotsPerType.map { case (tpe, value) => s"snapshots_$tpe" -> value.asJson }
-      val gigabytesPerType = quota.volumesStoragePerType.map { case (tpe, value) => s"gigabytes_$tpe" -> value.asJson }
-      JsonObject.fromMap(base ++ volumesPerType ++ snapshotsPerType ++ gigabytesPerType)
-    }
-  }
-  final case class Update(
-    volumes: Option[Int] = None,
-    volumesPerType: Map[String, Int] = Map.empty,
-    snapshots: Option[Int] = None,
-    snapshotsPerType: Map[String, Int] = Map.empty,
-    backups: Option[Int] = None,
-    groups: Option[Int] = None,
-    maxVolumeSize: Option[Information] = None,
-    backupsStorage: Option[Information] = None,
-    volumesStorage: Option[Information] = None,
-    volumesStoragePerType: Map[String, Information] = Map.empty,
-  )
+  implicit val show: ShowPretty[Quota] = derived.semiauto.showPretty
 }
 
 /**

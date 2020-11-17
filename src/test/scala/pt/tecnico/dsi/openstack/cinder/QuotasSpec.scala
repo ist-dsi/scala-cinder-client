@@ -1,6 +1,8 @@
 package pt.tecnico.dsi.openstack.cinder
 
+import scala.annotation.nowarn
 import cats.effect.{IO, Resource}
+import cats.syntax.show._
 import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.cinder.models.{Quota, QuotaUsage}
 import pt.tecnico.dsi.openstack.cinder.services.Quotas
@@ -73,6 +75,22 @@ class QuotasSpec extends Utils {
     }
     "delete quotas for a project" in withStub.use[IO, Assertion] { case (quotas, project) =>
       quotas.delete(project.id).idempotently(_ shouldBe ())
+    }
+
+    s"show quotas" in withStub.use[IO, Assertion] { case (quotas, project) =>
+      quotas.applyDefaults(project.id).map { quotas =>
+        //This line is a fail fast mechanism, and prevents false positives from the linter
+        println(show"$quotas")
+        """show"$quotas"""" should compile: @nowarn
+      }
+    }
+
+    s"show quota usage" in withStub.use[IO, Assertion] { case (quotas, project) =>
+      quotas.applyUsage(project.id).map { usage =>
+        //This line is a fail fast mechanism, and prevents false positives from the linter
+        println(show"$usage")
+        """show"$usage"""" should compile: @nowarn
+      }
     }
   }
 }

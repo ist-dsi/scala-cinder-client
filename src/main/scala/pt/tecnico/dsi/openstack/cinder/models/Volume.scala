@@ -1,6 +1,8 @@
 package pt.tecnico.dsi.openstack.cinder.models
 
 import java.time.LocalDateTime
+import cats.derived
+import cats.derived.ShowPretty
 import cats.effect.Sync
 import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
 import io.circe.{Decoder, Encoder, JsonObject}
@@ -14,8 +16,8 @@ object Volume {
     implicit val encoder: Encoder[Create] = Encoder.forProduct12(
       "size", "availability_zone", "name", "description", "multiattach", "source_volid", "snapshot_id", "backup_id",
       "imageRef", "volume_type", "metadata", "consistencygroup_id")(unapply(_).get)
+    implicit val show: ShowPretty[Create] = derived.semiauto.showPretty
   }
-
   /**
     * @param size the size of the volume, in gibibytes (GiB).
     * @param availabilityZone the availability zone where the volume will be created.
@@ -53,8 +55,8 @@ object Volume {
 
   object Update {
     implicit val encoder: Encoder[Update] = deriveEncoder(renaming.snakeCase)
+    implicit val show: ShowPretty[Update] = derived.semiauto.showPretty
   }
-
   /**
     * @param name the volume name.
     * @param description the volume description.
@@ -85,6 +87,7 @@ object Volume {
     val value: Boolean = obj(key).flatMap(_.asString).flatMap(_.toBooleanOption).getOrElse(false)
     obj.add(key, value.asJson)
   }))
+  implicit val show: ShowPretty[Volume] = derived.semiauto.showPretty
 }
 
 /**
