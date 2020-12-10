@@ -5,7 +5,7 @@ name := "scala-cinder-client"
 // ==== Compile Options =================================================================================================
 // ======================================================================================================================
 javacOptions ++= Seq("-Xlint", "-encoding", "UTF-8", "-Dfile.encoding=utf-8")
-scalaVersion := "2.13.3"
+scalaVersion := "2.13.4"
 
 scalacOptions ++= Seq(
   "-encoding", "utf-8",            // Specify character encoding used by source files.
@@ -39,7 +39,7 @@ scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value
 // ==== Dependencies ====================================================================================================
 // ======================================================================================================================
 libraryDependencies ++= Seq(
-  "pt.tecnico.dsi"  %% "scala-keystone-client" % "0.5.0-SNAPSHOT",
+  "pt.tecnico.dsi"  %% "scala-keystone-client" % "0.6.0-SNAPSHOT",
   "org.typelevel"   %% "squants"               % "1.7.0",
   "com.beachape"    %% "enumeratum-circe"      % "1.6.1",
   "ch.qos.logback"  %  "logback-classic"       % "1.2.3" % Test,
