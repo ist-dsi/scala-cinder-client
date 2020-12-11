@@ -35,8 +35,8 @@ case object VolumeStatus extends Enum[VolumeStatus] { self =>
   case object RestoringBackup extends VolumeStatus
   case object Retyping extends VolumeStatus
   case object Uploading extends VolumeStatus
-
+  
   val values = findValues
-
+  
   implicit val show: Show[VolumeStatus] = Show.fromToString
 }

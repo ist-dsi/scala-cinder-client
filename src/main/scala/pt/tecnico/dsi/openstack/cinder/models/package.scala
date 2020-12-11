@@ -12,9 +12,9 @@ package object models {
   // When setting sizes/quotas they are always whole numbers.
   implicit val decoderInformation: Decoder[Information] = Decoder.decodeInt.map(_.gibibytes)
   implicit val encoderInformation: Encoder[Information] = Encoder.encodeInt.contramap(_.toGibibytes.ceil.toInt)
-
+  
   implicit val showInformation: Show[Information] = Show.fromToString
-
+  
   // Show we instead use https://github.com/ChristopherDavenport/cats-time?
   implicit val showOffsetDateTime: Show[LocalDateTime] = Show.show(_.format(ISO_LOCAL_DATE_TIME))
 }

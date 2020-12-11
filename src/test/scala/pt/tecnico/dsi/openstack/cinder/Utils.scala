@@ -21,40 +21,40 @@ import pt.tecnico.dsi.openstack.keystone.models.Project
 
 abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll with OptionValues with EitherValues {
   val logger: Logger = getLogger
-
+  
   implicit override def executionContext = ExecutionContext.global
-
+  
   implicit val timer: Timer[IO] = IO.timer(executionContext)
   implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
-
+  
   val (_httpClient, finalizer) = BlazeClientBuilder[IO](global)
     .withResponseHeaderTimeout(20.seconds)
     .withCheckEndpointAuthentication(false)
     .resource.allocated.unsafeRunSync()
-
+  
   override protected def afterAll(): Unit = finalizer.unsafeRunSync()
-
+  
   //import org.http4s.client.middleware.Logger
   //implicit val httpClient: Client[IO] = Logger(logBody = true, logHeaders = true)(_httpClient)
   implicit val httpClient: Client[IO] = _httpClient
-
+  
   val keystone: KeystoneClient[IO] = KeystoneClient.fromEnvironment().unsafeRunSync()
   val cinder: CinderClient[IO] = keystone.session.clientBuilder[IO](CinderClient, sys.env("OS_REGION_NAME"))
     .fold(s => throw new Exception(s), identity)
-
+  
   // Not very purely functional :(
   val random = new Random()
   def randomName(): String = random.alphanumeric.take(10).mkString.dropWhile(_.isDigit).toLowerCase
   def withRandomName[T](f: String => IO[T]): IO[T] = IO.delay(randomName()).flatMap(f)
-
+  
   def resourceCreator[R <: Identifiable, Create](service: CrudService[IO, R, Create, _])(create: String => Create): Resource[IO, R] = {
     Resource.make(withRandomName(name => service(create(name))))(model => service.delete(model.id))
   }
-
+  
   val withStubProject: Resource[IO, Project] = resourceCreator(keystone.projects)(Project.Create(_))
-
+  
   val adminProject: IO[Project] = keystone.projects("admin", keystone.session.user.domainId)
-
+  
   implicit class RichIO[T](io: IO[T]) {
     def idempotently(test: T => Assertion, repetitions: Int = 3): IO[Assertion] = {
       require(repetitions >= 2, "To test for idempotency at least 2 repetitions must be made")
@@ -83,7 +83,7 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
       }
     }
   }
-
+  
   import scala.language.implicitConversions
   implicit def ioAssertion2FutureAssertion(io: IO[Assertion]): Future[Assertion] = io.unsafeToFuture()
 }

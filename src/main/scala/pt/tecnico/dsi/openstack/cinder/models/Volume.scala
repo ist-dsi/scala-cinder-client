@@ -52,7 +52,7 @@ object Volume {
     metadata: Map[String, String] = Map.empty,
     consistencyGroupId: Option[String] = None,
   )
-
+  
   object Update {
     implicit val encoder: Encoder[Update] = deriveEncoder(renaming.snakeCase)
     implicit val show: ShowPretty[Update] = derived.semiauto.showPretty
@@ -67,7 +67,7 @@ object Volume {
     description: Option[String] = None,
     metadata: Map[String, String] = Map.empty,
   )
-
+  
   implicit val decoder: Decoder[Volume] = deriveDecoder[Volume](Map(
     "projectId" -> "os-vol-tenant-attr:tenant_id",
     "type" -> "volume_type",

@@ -26,7 +26,7 @@ object Quota {
       val gigabytesPerType = quota.volumesStoragePerType.map { case (tpe, value) => s"gigabytes_$tpe" -> value.asJson }
       JsonObject.fromMap(base ++ volumesPerType ++ snapshotsPerType ++ gigabytesPerType)
     }
-
+    
     implicit val show: ShowPretty[Update] = derived.semiauto.showPretty
   }
   final case class Update(
@@ -41,17 +41,17 @@ object Quota {
     volumesStorage: Option[Information] = None,
     volumesStoragePerType: Map[String, Information] = Map.empty,
   )
-
+  
   // Its better to have this slightly uglier than to repeat it for the QuotaUsage.
   private[models] def decoder[F[_], T](f: (F[Int], Map[String, F[Int]], F[Int], Map[String, F[Int]], F[Int], F[Int], F[Information], F[Information], F[Information], Map[String, F[Information]]) => T)
     (implicit dFInt: Decoder[F[Int]], dFInformation: Decoder[F[Information]]): Decoder[T] = (cursor: HCursor) => {
     val allKeys = cursor.keys.map(_.toList).getOrElse(List.empty)
-
+    
     def extractPerType[R: Decoder](prefix: String): Either[DecodingFailure, Map[String, R]] =
       allKeys.filter(_.startsWith(prefix)).traverse { key =>
         cursor.get[R](key).map(key.stripPrefix(prefix) -> _)
       }.map(_.toMap)
-
+    
     for {
       volumes <- cursor.get[F[Int]]("volumes")
       volumesPerType <- extractPerType[F[Int]]("volumes_")
@@ -66,7 +66,7 @@ object Quota {
     } yield f(volumes, volumesPerType, snapshots, snapshotsPerType, backups, groups, maxVolumeSize, backupsStorage, volumesStorage, volumesStoragePerType)
   }
   implicit val decoder: Decoder[Quota] = decoder[Id, Quota](Quota.apply)
-
+  
   implicit val show: ShowPretty[Quota] = derived.semiauto.showPretty
 }
 

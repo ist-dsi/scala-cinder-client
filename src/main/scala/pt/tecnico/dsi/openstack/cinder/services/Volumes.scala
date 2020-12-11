@@ -2,32 +2,29 @@ package pt.tecnico.dsi.openstack.cinder.services
 
 import cats.effect.Sync
 import fs2.Stream
+import io.circe.{Decoder, Encoder}
 import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
 import pt.tecnico.dsi.openstack.cinder.models.{Volume, VolumeSummary}
-import pt.tecnico.dsi.openstack.common.services.CrudService
+import pt.tecnico.dsi.openstack.common.services.{BaseCrudService, CreateNonIdempotentOperations, DeleteOperations, ListOperations, ReadOperations, UpdateOperations}
 import pt.tecnico.dsi.openstack.keystone.models.Session
 
 final class Volumes[F[_]: Sync: Client](baseUri: Uri, session: Session)
-  extends CrudService[F, Volume, Volume.Create, Volume.Update](baseUri, "volume", session.authToken) {
+  extends BaseCrudService[F](baseUri, "volume", session.authToken)
+    with CreateNonIdempotentOperations[F, Volume, Volume.Create]
+    with UpdateOperations[F, Volume, Volume.Update]
+    with ListOperations[F, Volume]
+    with ReadOperations[F, Volume]
+    with DeleteOperations[F, Volume] {
+  override implicit val modelDecoder: Decoder[Volume] = Volume.decoder
+  override implicit val createEncoder: Encoder[Volume.Create] = Volume.Create.encoder
+  override implicit val updateEncoder: Encoder[Volume.Update] = Volume.Update.encoder
   
   /**
     * Creates a new volume.
-    *
-    * @note this method is not idempotent! The Openstack API creates a new Volume every time.
     * @param volume the volume create options.
     */
   override def create(volume: Volume.Create, extraHeaders: Header*): F[Volume] = super.create(volume, extraHeaders:_*)
-  
-  /** This method throws a NotImplementedError. */
-  override def defaultResolveConflict(existing: Volume, create: Volume.Create, keepExistingElements: Boolean, extraHeaders: Seq[Header]): F[Volume] = ???
-  
-  /** Creating a Volume cannot be implemented idempotently. That is why this method throws a NotImplementedError. */
-  override def createOrUpdate(create: Volume.Create, keepExistingElements: Boolean, extraHeaders: Seq[Header])(resolveConflict: (Volume, Volume.Create) =>
-    F[Volume]): F[Volume] = {
-    // Should we throw inside IO?
-    ???
-  }
   
   /**
     * Lists summary information for all Block Storage volumes that the project can access.

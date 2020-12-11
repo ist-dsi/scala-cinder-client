@@ -20,20 +20,17 @@ class VolumesSpec extends Utils with OptionValues {
         volume <- volumes.create(volumeCreate)
       } yield (volumes, admin, volumeCreate, volume)
     }
-
+    
     Resource.make(create) { case (volumes, _, _, volume) =>
       // When a Volume is created its status is set to creating. We cannot delete a volume with status creating.
       // We asynchronously wait bit so the status can hopefully become available.
       IO.sleep(1.second) *> volumes.delete(volume.id)
     }
   }
-
+  
   "Volumes service" should {
     "create volumes" in withStubVolume.use[IO, Assertion] { case (_, _, volumeCreate, volume) =>
       IO.pure {
-        // Creating a Volume is not an idempotent operation because:
-        //  The endpoint always creates new Volumes even if the name is the same
-        //  It also does not return a Conflict in any scenario
         volume.description shouldBe volumeCreate.description
         volume.name shouldBe volumeCreate.name
         volume.availabilityZone shouldBe "nova"
@@ -68,7 +65,7 @@ class VolumesSpec extends Utils with OptionValues {
     "get a volume (non-existing id)" in withStubVolume.use[IO, Assertion] { case (volumes, _, _, _) =>
       volumes.get("non-existing-id").idempotently(_ shouldBe None)
     }
-
+    
     s"show volumes" in withStubVolume.use[IO, Assertion] { case (_, _, _, model) =>
       //This line is a fail fast mechanism, and prevents false positives from the linter
       println(show"$model")
