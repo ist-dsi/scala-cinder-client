@@ -22,4 +22,5 @@ class CinderClient[F[_]: Sync](baseUri: Uri, session: Session)(implicit client: 
 	
 	def quotas(adminProjectId: String) = new Quotas[F](uri / adminProjectId, session)
 	def volumes(projectId: String) = new Volumes[F](uri / projectId, session)
+	def snapshots(projectId: String) = new Snapshots[F](uri / projectId, session)
 }

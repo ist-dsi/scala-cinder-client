@@ -5,12 +5,12 @@ import fs2.Stream
 import io.circe.{Decoder, Encoder}
 import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
-import pt.tecnico.dsi.openstack.cinder.models.{Volume, VolumeSummary}
-import pt.tecnico.dsi.openstack.common.services.{BaseCrudService, CreateNonIdempotentOperations, DeleteOperations, ListOperations, ReadOperations, UpdateOperations}
+import pt.tecnico.dsi.openstack.cinder.models.Volume
+import pt.tecnico.dsi.openstack.common.services._
 import pt.tecnico.dsi.openstack.keystone.models.Session
 
 final class Volumes[F[_]: Sync: Client](baseUri: Uri, session: Session)
-  extends BaseCrudService[F](baseUri, "volume", session.authToken)
+  extends PartialCrudService[F](baseUri, "volume", session.authToken)
     with CreateNonIdempotentOperations[F, Volume, Volume.Create]
     with UpdateOperations[F, Volume, Volume.Update]
     with ListOperations[F, Volume]
@@ -31,15 +31,15 @@ final class Volumes[F[_]: Sync: Client](baseUri: Uri, session: Session)
     *
     * @param query extra query params to pass in the request.
     */
-  def listSummary(query: Query = Query.empty): F[List[VolumeSummary]] = super.list[VolumeSummary](pluralName, uri.copy(query = query))
-  
+  def listSummary(query: Query = Query.empty): F[List[Volume.Summary]] = super.list[Volume.Summary](pluralName, uri.copy(query = query))
+
   /**
     * Streams summary information for all Block Storage volumes that the project can access.
     *
     * @param query extra query params to pass in the request.
     */
-  def streamSummary(query: Query = Query.empty): Stream[F, VolumeSummary] = super.stream[VolumeSummary](pluralName, uri.copy(query = query))
-  
+  def streamSummary(query: Query = Query.empty): Stream[F, Volume.Summary] = super.stream[Volume.Summary](pluralName, uri.copy(query = query))
+
   override def list(query: Query, extraHeaders: Header*): F[List[Volume]] =
     super.list[Volume](pluralName, (uri / "detail").copy(query = query), extraHeaders:_*)
   
