@@ -12,6 +12,16 @@ import pt.tecnico.dsi.openstack.keystone.models.{Project, User}
 import squants.information.Information
 
 object Volume {
+  object Summary {
+    implicit val decoder: Decoder[Summary] = deriveDecoder
+    implicit val show: ShowPretty[Summary] = derived.semiauto.showPretty
+  }
+  case class Summary(
+    id: String,
+    name: Option[String] = None,
+    links: List[Link] = List.empty,
+  ) extends Identifiable
+
   object Create {
     implicit val encoder: Encoder[Create] = Encoder.forProduct12(
       "size", "availability_zone", "name", "description", "multiattach", "source_volid", "snapshot_id", "backup_id",
