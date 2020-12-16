@@ -8,6 +8,7 @@ import cats.{Id, derived}
 import io.circe.syntax._
 import io.circe._
 import squants.information.Information
+import squants.information.InformationConversions._
 
 object Quota {
   object Update {
@@ -26,8 +27,19 @@ object Quota {
       val gigabytesPerType = quota.volumesStoragePerType.map { case (tpe, value) => s"gigabytes_$tpe" -> value.asJson }
       JsonObject.fromMap(base ++ volumesPerType ++ snapshotsPerType ++ gigabytesPerType)
     }
-    
     implicit val show: ShowPretty[Update] = derived.semiauto.showPretty
+    val zero: Update = Update(
+      volumes = Some(0),
+      volumesPerType = Map.empty,
+      snapshots = Some(0),
+      snapshotsPerType = Map.empty,
+      backups = Some(0),
+      groups = Some(0),
+      maxVolumeSize = Some(0.bytes),
+      backupsStorage = Some(0.bytes),
+      volumesStorage = Some(0.bytes),
+      volumesStoragePerType = Map.empty,
+    )
   }
   final case class Update(
     volumes: Option[Int] = None,
