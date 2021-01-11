@@ -45,7 +45,7 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
   )(_httpClient)*/
   implicit val httpClient: Client[IO] = _httpClient
   
-  val keystone: KeystoneClient[IO] = KeystoneClient.fromEnvironment().unsafeRunSync()
+  val keystone: KeystoneClient[IO] = KeystoneClient.authenticateFromEnvironment().unsafeRunSync()
   val cinder: CinderClient[IO] = keystone.session.clientBuilder[IO](CinderClient, sys.env("OS_REGION_NAME"))
     .fold(s => throw new Exception(s), identity)
   
