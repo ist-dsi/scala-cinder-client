@@ -18,7 +18,7 @@ object Volume {
   }
   case class Summary(
     id: String,
-    name: Option[String] = None,
+    name: String,
     links: List[Link] = List.empty,
   ) extends Identifiable
 
@@ -51,7 +51,7 @@ object Volume {
   case class Create(
     size: Information,
     availabilityZone: Option[String] = None,
-    name: Option[String] = None,
+    name: String = "",
     description: Option[String] = None,
     multiAttach: Boolean = false,
     sourceVolumeId: Option[String] = None,
@@ -132,7 +132,7 @@ case class Volume(
   status: VolumeStatus,
   userId: String,
   projectId: Option[String] = None,
-  name: Option[String] = None,
+  name: String = "",
   description: Option[String] = None,
   `type`: Option[String] = None,
   availabilityZone: String,

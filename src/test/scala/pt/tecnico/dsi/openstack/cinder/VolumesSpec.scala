@@ -13,7 +13,7 @@ import squants.information.InformationConversions._
 class VolumesSpec extends Utils with OptionValues {
   val withStubVolume: Resource[IO, (Volumes[IO], Project, Volume.Create, Volume)] = {
     val create = withRandomName { name =>
-      val volumeCreate = Volume.Create(1.gibibytes, name = Some(name), description = Some("a description"))
+      val volumeCreate = Volume.Create(1.gibibytes, name = name, description = Some("a description"))
       for {
         admin <- adminProject
         volumes = cinder.volumes(admin.id)
