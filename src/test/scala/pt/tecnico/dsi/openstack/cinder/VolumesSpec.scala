@@ -4,7 +4,7 @@ import scala.annotation.nowarn
 import scala.concurrent.duration.DurationInt
 import cats.effect.{IO, Resource}
 import cats.syntax.show._
-import org.scalatest.{Assertion, OptionValues}
+import org.scalatest.OptionValues
 import pt.tecnico.dsi.openstack.cinder.models.Volume
 import pt.tecnico.dsi.openstack.cinder.services.Volumes
 import pt.tecnico.dsi.openstack.keystone.models.Project
@@ -29,30 +29,30 @@ class VolumesSpec extends Utils with OptionValues {
   }
   
   "Volumes service" should {
-    "create volumes" in withStubVolume.use[IO, Assertion] { case (_, _, volumeCreate, volume) =>
+    "create volumes" in withStubVolume.use { case (_, _, volumeCreate, volume) =>
       IO.pure {
         volume.description shouldBe volumeCreate.description
         volume.name shouldBe volumeCreate.name
         volume.availabilityZone shouldBe "nova"
       }
     }
-    "delete volumes" in withStubVolume.use[IO, Assertion] { case (volumes, _, _, volume) =>
+    "delete volumes" in withStubVolume.use { case (volumes, _, _, volume) =>
       val delete = IO.sleep(2.second) *> volumes.delete(volume.id)
       delete.idempotently(_ shouldBe ())
     }
-    "list summary volumes" in withStubVolume.use[IO, Assertion] { case (volumes, _, volumeCreate, volume) =>
+    "list summary volumes" in withStubVolume.use { case (volumes, _, volumeCreate, volume) =>
       volumes.listSummary().idempotently { volumesSummary =>
         volumesSummary.exists(_.id == volume.id) shouldBe true
         volumesSummary.exists(_.name == volumeCreate.name) shouldBe true
       }
     }
-    "list volumes" in withStubVolume.use[IO, Assertion] { case (volumes, adminProject, _, volume) =>
+    "list volumes" in withStubVolume.use { case (volumes, adminProject, _, volume) =>
       volumes.list().idempotently { volumes =>
         val createdVolumeInList = volumes.find(_.id == volume.id)
         createdVolumeInList.value.projectId.value shouldBe adminProject.id
       }
     }
-    "get a volume (existing id)" in withStubVolume.use[IO, Assertion] { case (volumes, adminProject, volumeCreate, volume) =>
+    "get a volume (existing id)" in withStubVolume.use { case (volumes, adminProject, volumeCreate, volume) =>
       volumes.get(volume.id).idempotently { vol =>
         vol.value.id shouldBe volume.id
         vol.value.description shouldBe volumeCreate.description
@@ -62,11 +62,11 @@ class VolumesSpec extends Utils with OptionValues {
         vol.value.size shouldBe volumeCreate.size
       }
     }
-    "get a volume (non-existing id)" in withStubVolume.use[IO, Assertion] { case (volumes, _, _, _) =>
+    "get a volume (non-existing id)" in withStubVolume.use { case (volumes, _, _, _) =>
       volumes.get("non-existing-id").idempotently(_ shouldBe None)
     }
     
-    s"show volumes" in withStubVolume.use[IO, Assertion] { case (_, _, _, model) =>
+    s"show volumes" in withStubVolume.use { case (_, _, _, model) =>
       //This line is a fail fast mechanism, and prevents false positives from the linter
       println(show"$model")
       IO("""show"$model"""" should compile): @nowarn

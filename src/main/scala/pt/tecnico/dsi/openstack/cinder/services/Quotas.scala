@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.openstack.cinder.services
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import io.circe.Encoder
 import org.http4s.Uri
 import org.http4s.client.Client
@@ -8,7 +8,7 @@ import pt.tecnico.dsi.openstack.cinder.models.{Quota, QuotaUsage}
 import pt.tecnico.dsi.openstack.common.services.Service
 import pt.tecnico.dsi.openstack.keystone.models.Session
 
-final class Quotas[F[_]: Sync: Client](baseUri: Uri, session: Session) extends Service[F](baseUri, "quota_set", session.authToken) {
+final class Quotas[F[_]: Concurrent: Client](baseUri: Uri, session: Session) extends Service[F](baseUri, "quota_set", session.authToken) {
   override val uri: Uri = baseUri / "os-quota-sets"
   
   private val wrappedAt: Option[String] = Some(name)

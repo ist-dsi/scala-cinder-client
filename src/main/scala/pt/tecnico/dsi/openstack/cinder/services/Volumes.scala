@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.openstack.cinder.services
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import fs2.Stream
 import io.circe.{Decoder, Encoder}
 import org.http4s.client.Client
@@ -9,7 +9,7 @@ import pt.tecnico.dsi.openstack.cinder.models.Volume
 import pt.tecnico.dsi.openstack.common.services._
 import pt.tecnico.dsi.openstack.keystone.models.Session
 
-final class Volumes[F[_]: Sync: Client](baseUri: Uri, session: Session)
+final class Volumes[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
   extends PartialCrudService[F](baseUri, "volume", session.authToken)
     with CreateNonIdempotentOperations[F, Volume, Volume.Create]
     with UpdateOperations[F, Volume, Volume.Update]

@@ -3,7 +3,6 @@ package pt.tecnico.dsi.openstack.cinder
 import scala.annotation.nowarn
 import cats.effect.{IO, Resource}
 import cats.syntax.show._
-import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.cinder.models.{Quota, QuotaUsage}
 import pt.tecnico.dsi.openstack.cinder.services.Quotas
 import pt.tecnico.dsi.openstack.common.models.Usage
@@ -42,42 +41,42 @@ class QuotasSpec extends Utils {
   )
   
   "Quotas service" should {
-    "apply quotas for a project (existing id)" in withStub.use[IO, Assertion] { case (quotas, project) =>
+    "apply quotas for a project (existing id)" in withStub.use { case (quotas, project) =>
       quotas.apply(project.id).idempotently(_ shouldBe defaultQuotas)
     }
-    "apply quotas for a project (non-existing id)" in withStub.use[IO, Assertion] { case (quotas, _) =>
+    "apply quotas for a project (non-existing id)" in withStub.use { case (quotas, _) =>
       // This is not a mistake in the test. Cinder does return a Quota even if the project does not exist :faceplam:
       quotas.apply("non-existing-id").idempotently(_ shouldBe defaultQuotas)
     }
     
-    "apply usage quotas for a project (existing id)" in withStub.use[IO, Assertion] { case (quotas, project) =>
+    "apply usage quotas for a project (existing id)" in withStub.use { case (quotas, project) =>
       quotas.applyUsage(project.id).idempotently(_ shouldBe defaultUsageQuotas)
     }
-    "apply usage quotas for a project (non-existing id)" in withStub.use[IO, Assertion] { case (quotas, _) =>
+    "apply usage quotas for a project (non-existing id)" in withStub.use { case (quotas, _) =>
       // This is not a mistake in the test. Cinder does return a Quota even if the project does not exist :faceplam:
       quotas.applyUsage("non-existing-id").idempotently(_ shouldBe defaultUsageQuotas)
     }
     
-    "apply default quotas for a project (existing id)" in withStub.use[IO, Assertion] { case (quotas, project) =>
+    "apply default quotas for a project (existing id)" in withStub.use { case (quotas, project) =>
       quotas.applyDefaults(project.id).idempotently(_ shouldBe defaultQuotas)
     }
-    "apply default quotas for a project (non-existing id)" in withStub.use[IO, Assertion] { case (quotas, _) =>
+    "apply default quotas for a project (non-existing id)" in withStub.use { case (quotas, _) =>
       // This is not a mistake in the test. Cinder does return a Quota even if the project does not exist :faceplam:
       quotas.applyDefaults("non-existing-id").idempotently(_ shouldBe defaultQuotas)
     }
     
-    "update quotas for a project" in withStub.use[IO, Assertion] { case (quotas, project) =>
+    "update quotas for a project" in withStub.use { case (quotas, project) =>
       val newQuotas = Quota.Update(volumes = Some(25), maxVolumeSize = Some(25.gibibytes))
       quotas.update(project.id, newQuotas).idempotently { quota =>
         quota.volumes shouldBe 25
         quota.maxVolumeSize shouldBe 25.gibibytes
       }
     }
-    "delete quotas for a project" in withStub.use[IO, Assertion] { case (quotas, project) =>
+    "delete quotas for a project" in withStub.use { case (quotas, project) =>
       quotas.delete(project.id).idempotently(_ shouldBe ())
     }
     
-    s"show quotas" in withStub.use[IO, Assertion] { case (quotas, project) =>
+    s"show quotas" in withStub.use { case (quotas, project) =>
       quotas.applyDefaults(project.id).map { quotas =>
         //This line is a fail fast mechanism, and prevents false positives from the linter
         println(show"$quotas")
@@ -85,7 +84,7 @@ class QuotasSpec extends Utils {
       }
     }
     
-    s"show quota usage" in withStub.use[IO, Assertion] { case (quotas, project) =>
+    s"show quota usage" in withStub.use { case (quotas, project) =>
       quotas.applyUsage(project.id).map { usage =>
         //This line is a fail fast mechanism, and prevents false positives from the linter
         println(show"$usage")

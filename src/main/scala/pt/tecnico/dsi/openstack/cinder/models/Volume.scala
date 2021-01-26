@@ -1,9 +1,8 @@
 package pt.tecnico.dsi.openstack.cinder.models
 
 import java.time.LocalDateTime
-import cats.derived
+import cats.{Applicative, derived}
 import cats.derived.ShowPretty
-import cats.effect.Sync
 import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
 import io.circe.{Decoder, Encoder, JsonObject}
 import pt.tecnico.dsi.openstack.common.models.{Identifiable, Link}
@@ -153,9 +152,9 @@ case class Volume(
   updatedAt: Option[LocalDateTime] = None,
   links: List[Link] = List.empty,
 ) extends Identifiable {
-  def user[F[_]: Sync](implicit keystone: KeystoneClient[F]): F[User] = keystone.users(userId)
-  def project[F[_]: Sync](implicit keystone: KeystoneClient[F]): F[Option[Project]] = projectId match {
-    case None => Sync[F].pure(Option.empty)
+  def user[F[_]](implicit keystone: KeystoneClient[F]): F[User] = keystone.users(userId)
+  def project[F[_]: Applicative](implicit keystone: KeystoneClient[F]): F[Option[Project]] = projectId match {
+    case None => Applicative[F].pure(Option.empty)
     case Some(id) => keystone.projects.get(id)
   }
 }

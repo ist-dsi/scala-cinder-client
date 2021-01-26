@@ -1,10 +1,10 @@
 package pt.tecnico.dsi.openstack.cinder
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.util.Random
-import cats.effect.{ContextShift, IO, Resource, Timer}
+import cats.effect.unsafe.implicits.global
+import cats.effect.{IO, Resource}
 import cats.instances.list._
 import cats.syntax.traverse._
 import org.http4s.client.Client
@@ -22,12 +22,7 @@ import pt.tecnico.dsi.openstack.keystone.models.Project
 abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll with OptionValues with EitherValues {
   val logger: Logger = getLogger
   
-  implicit override def executionContext = ExecutionContext.global
-  
-  implicit val timer: Timer[IO] = IO.timer(executionContext)
-  implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
-  
-  val (_httpClient, finalizer) = BlazeClientBuilder[IO](global)
+  val (_httpClient, finalizer) = BlazeClientBuilder[IO](global.compute)
     .withResponseHeaderTimeout(20.seconds)
     .withCheckEndpointAuthentication(false)
     .resource.allocated.unsafeRunSync()
