@@ -3,8 +3,8 @@ package pt.tecnico.dsi.openstack.cinder.models
 import java.time.LocalDateTime
 import cats.{Applicative, derived}
 import cats.derived.ShowPretty
-import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
-import io.circe.{Decoder, Encoder, JsonObject}
+import io.circe.derivation.{deriveCodec, deriveDecoder, deriveEncoder, renaming}
+import io.circe.{Codec, Decoder, Encoder, JsonObject}
 import pt.tecnico.dsi.openstack.common.models.{Identifiable, Link}
 import pt.tecnico.dsi.openstack.keystone.KeystoneClient
 import pt.tecnico.dsi.openstack.keystone.models.{Project, User}
@@ -12,7 +12,7 @@ import squants.information.Information
 
 object Volume {
   object Summary {
-    implicit val decoder: Decoder[Summary] = deriveDecoder
+    implicit val codec: Codec[Summary] = deriveCodec(renaming.snakeCase)
     implicit val show: ShowPretty[Summary] = derived.semiauto.showPretty
   }
   case class Summary(
@@ -77,7 +77,7 @@ object Volume {
     metadata: Map[String, String] = Map.empty,
   )
   
-  implicit val decoder: Decoder[Volume] = deriveDecoder[Volume](Map(
+  val renames: Map[String, String] = Map(
     "projectId" -> "os-vol-tenant-attr:tenant_id",
     "type" -> "volume_type",
     "multiAttach" -> "multiattach",
@@ -89,13 +89,15 @@ object Volume {
     // "migration_status" is only for admins, "os-vol-mig-status-attr:migstat" seems to always be present and have the
     // same value as the "migration_status"
     "migrationStatus" -> "os-vol-mig-status-attr:migstat",
-  ).withDefault(renaming.snakeCase)).prepare(_.withFocus(_ mapObject{ obj =>
+  ).withDefault(renaming.snakeCase)
+  implicit val decoder: Decoder[Volume] = deriveDecoder[Volume](renames).prepare(_.withFocus(_ mapObject{ obj =>
     import io.circe.syntax._
     val key = "bootable"
     // Yes, in the Json it is a boolean inside a string :facepalm:
     val value: Boolean = obj(key).flatMap(_.asString).flatMap(_.toBooleanOption).getOrElse(false)
     obj.add(key, value.asJson)
   }))
+  implicit val encoder: Encoder[Volume] = deriveEncoder(renaming.snakeCase)
   implicit val show: ShowPretty[Volume] = derived.semiauto.showPretty
 }
 

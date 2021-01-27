@@ -7,6 +7,7 @@ import cats.syntax.traverse._
 import cats.{Id, derived}
 import io.circe.syntax._
 import io.circe._
+import io.circe.derivation.{deriveEncoder, renaming}
 import squants.information.Information
 import squants.information.InformationConversions._
 
@@ -78,6 +79,7 @@ object Quota {
     } yield f(volumes, volumesPerType, snapshots, snapshotsPerType, backups, groups, maxVolumeSize, backupsStorage, volumesStorage, volumesStoragePerType)
   }
   implicit val decoder: Decoder[Quota] = decoder[Id, Quota](Quota.apply)
+  implicit val encoder: Encoder[Quota] = deriveEncoder(renaming.snakeCase)
   
   implicit val show: ShowPretty[Quota] = derived.semiauto.showPretty
 }
