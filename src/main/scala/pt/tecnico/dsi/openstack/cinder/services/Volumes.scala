@@ -24,7 +24,7 @@ final class Volumes[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
     * Creates a new volume.
     * @param volume the volume create options.
     */
-  override def create(volume: Volume.Create, extraHeaders: Header*): F[Volume] = super.create(volume, extraHeaders:_*)
+  override def create(volume: Volume.Create, extraHeaders: Header.ToRaw*): F[Volume] = super.create(volume, extraHeaders:_*)
   
   /**
     * Lists summary information for all Block Storage volumes that the project can access.
@@ -40,10 +40,10 @@ final class Volumes[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
     */
   def streamSummary(query: Query = Query.empty): Stream[F, Volume.Summary] = super.stream[Volume.Summary](pluralName, uri.copy(query = query))
   
-  override def list(query: Query, extraHeaders: Header*): F[List[Volume]] =
+  override def list(query: Query, extraHeaders: Header.ToRaw*): F[List[Volume]] =
     super.list[Volume](pluralName, (uri / "detail").copy(query = query), extraHeaders:_*)
   
-  override def stream(query: Query, extraHeaders: Header*): fs2.Stream[F, Volume] =
+  override def stream(query: Query, extraHeaders: Header.ToRaw*): fs2.Stream[F, Volume] =
     super.stream[Volume](pluralName, (uri / "detail").copy(query = query), extraHeaders:_*)
   
   /**
