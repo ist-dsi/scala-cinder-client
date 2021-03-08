@@ -53,7 +53,13 @@ object Quota {
     backupsStorage: Option[Information] = None,
     volumesStorage: Option[Information] = None,
     volumesStoragePerType: Map[String, Information] = Map.empty,
-  )
+  ) {
+    lazy val needsUpdate: Boolean = {
+      val aOptionIsDefined = List(volumes, snapshots, backups, groups, maxVolumeSize, backupsStorage, volumesStorage).exists(_.isDefined)
+      val aMapIsNonEmpty = List(volumesPerType, snapshotsPerType, volumesStoragePerType).exists(_.nonEmpty)
+      aOptionIsDefined || aMapIsNonEmpty
+    }
+  }
   
   val zero: Quota = Quota(0, Map.empty, 0, Map.empty, 0, 0, 0.gibibytes, 0.gibibytes, 0.gibibytes, Map.empty)
   
