@@ -55,6 +55,8 @@ object Quota {
     volumesStoragePerType: Map[String, Information] = Map.empty,
   )
   
+  val zero: Quota = Quota(0, Map.empty, 0, Map.empty, 0, 0, 0.gibibytes, 0.gibibytes, 0.gibibytes, Map.empty)
+  
   // Its better to have this slightly uglier than to repeat it for the QuotaUsage.
   private[models] def decoder[F[_], T](f: (F[Int], Map[String, F[Int]], F[Int], Map[String, F[Int]], F[Int], F[Int], F[Information], F[Information], F[Information], Map[String, F[Information]]) => T)
     (implicit dFInt: Decoder[F[Int]], dFInformation: Decoder[F[Information]]): Decoder[T] = (cursor: HCursor) => {
