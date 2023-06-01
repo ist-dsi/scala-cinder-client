@@ -1,24 +1,23 @@
 package pt.tecnico.dsi.openstack.cinder
 
-import scala.annotation.nowarn
 import scala.concurrent.duration.DurationInt
 import cats.effect.{IO, Resource}
-import cats.syntax.show._
+import cats.syntax.show.*
 import org.scalatest.OptionValues
 import pt.tecnico.dsi.openstack.cinder.models.Volume
 import pt.tecnico.dsi.openstack.cinder.services.Volumes
 import pt.tecnico.dsi.openstack.keystone.models.Project
-import squants.information.InformationConversions._
+import squants.information.InformationConversions.*
 
-class VolumesSpec extends Utils with OptionValues {
-  val withStubVolume: Resource[IO, (Volumes[IO], Project, Volume.Create, Volume)] = {
+class VolumesSpec extends Utils with OptionValues:
+  val withStubVolume: Resource[IO, (Volumes[IO], Project, Volume.Create, Volume)] =
     val create = withRandomName { name =>
       val volumeCreate = Volume.Create(1.gibibytes, name = name, description = Some("a description"))
-      for {
+      for
         admin <- adminProject
         volumes = cinder.volumes(admin.id)
         volume <- volumes.create(volumeCreate)
-      } yield (volumes, admin, volumeCreate, volume)
+      yield (volumes, admin, volumeCreate, volume)
     }
     
     Resource.make(create) { case (volumes, _, _, volume) =>
@@ -26,15 +25,13 @@ class VolumesSpec extends Utils with OptionValues {
       // We asynchronously wait bit so the status can hopefully become available.
       IO.sleep(1.second) *> volumes.delete(volume.id)
     }
-  }
   
-  "Volumes service" should {
+  "Volumes service" should:
     "create volumes" in withStubVolume.use { case (_, _, volumeCreate, volume) =>
-      IO.pure {
+      IO.pure:
         volume.description shouldBe volumeCreate.description
         volume.name shouldBe volumeCreate.name
         volume.availabilityZone shouldBe "nova"
-      }
     }
     "delete volumes" in withStubVolume.use { case (volumes, _, _, volume) =>
       val delete = IO.sleep(2.second) *> volumes.delete(volume.id)
@@ -69,7 +66,5 @@ class VolumesSpec extends Utils with OptionValues {
     s"show volumes" in withStubVolume.use { case (_, _, _, model) =>
       //This line is a fail fast mechanism, and prevents false positives from the linter
       println(show"$model")
-      IO("""show"$model"""" should compile): @nowarn
+      IO("""show"$model"""" should compile)
     }
-  }
-}

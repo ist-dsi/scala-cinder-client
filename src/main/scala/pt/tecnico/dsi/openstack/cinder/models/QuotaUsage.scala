@@ -1,17 +1,14 @@
 package pt.tecnico.dsi.openstack.cinder.models
 
-import cats.derived
+import cats.derived.derived
 import cats.derived.ShowPretty
 import io.circe.{Decoder, Encoder}
-import io.circe.derivation.{deriveEncoder, renaming}
+import io.circe.derivation.ConfiguredEncoder
 import pt.tecnico.dsi.openstack.common.models.Usage
 import squants.information.Information
 
-object QuotaUsage {
-  implicit val decoder: Decoder[QuotaUsage] = Quota.decoder[Usage, QuotaUsage](QuotaUsage.apply)
-  implicit val encoder: Encoder[QuotaUsage] = deriveEncoder(renaming.snakeCase)
-  implicit val show: ShowPretty[QuotaUsage] = derived.semiauto.showPretty
-}
+object QuotaUsage:
+  given Decoder[QuotaUsage] = Quota.decoder[Usage, QuotaUsage](QuotaUsage.apply)
 /**
   * A value of -1 means no limit.
   * @param volumes number of volumes that are allowed for each project.
@@ -36,4 +33,4 @@ case class QuotaUsage(
   backupsStorage: Usage[Information],
   volumesStorage: Usage[Information],
   volumesStoragePerType: Map[String, Usage[Information]]
-)
+) derives ConfiguredEncoder, ShowPretty

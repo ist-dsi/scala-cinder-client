@@ -6,7 +6,7 @@ import io.circe.{Decoder, Encoder}
 import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
 import pt.tecnico.dsi.openstack.cinder.models.Volume
-import pt.tecnico.dsi.openstack.common.services._
+import pt.tecnico.dsi.openstack.common.services.*
 import pt.tecnico.dsi.openstack.keystone.models.Session
 
 final class Volumes[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
@@ -15,16 +15,16 @@ final class Volumes[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
     with UpdateOperations[F, Volume, Volume.Update]
     with ListOperations[F, Volume]
     with ReadOperations[F, Volume]
-    with DeleteOperations[F, Volume] {
-  override implicit val modelDecoder: Decoder[Volume] = Volume.decoder
-  override implicit val createEncoder: Encoder[Volume.Create] = Volume.Create.encoder
-  override implicit val updateEncoder: Encoder[Volume.Update] = Volume.Update.encoder
+    with DeleteOperations[F, Volume]:
+  override given modelDecoder: Decoder[Volume] = Volume.given_Decoder_Volume
+  override given createEncoder: Encoder[Volume.Create] = Volume.Create.derived$ConfiguredEncoder
+  override given updateEncoder: Encoder[Volume.Update] = Volume.Update.derived$ConfiguredEncoder
   
   /**
     * Creates a new volume.
     * @param volume the volume create options.
     */
-  override def create(volume: Volume.Create, extraHeaders: Header.ToRaw*): F[Volume] = super.create(volume, extraHeaders:_*)
+  override def create(volume: Volume.Create, extraHeaders: Header.ToRaw*): F[Volume] = super.create(volume, extraHeaders*)
   
   /**
     * Lists summary information for all Block Storage volumes that the project can access.
@@ -41,10 +41,10 @@ final class Volumes[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
   def streamSummary(query: Query = Query.empty): Stream[F, Volume.Summary] = super.stream[Volume.Summary](pluralName, uri.copy(query = query))
   
   override def list(query: Query, extraHeaders: Header.ToRaw*): F[List[Volume]] =
-    super.list[Volume](pluralName, (uri / "detail").copy(query = query), extraHeaders:_*)
+    super.list[Volume](pluralName, (uri / "detail").copy(query = query), extraHeaders*)
   
   override def stream(query: Query, extraHeaders: Header.ToRaw*): fs2.Stream[F, Volume] =
-    super.stream[Volume](pluralName, (uri / "detail").copy(query = query), extraHeaders:_*)
+    super.stream[Volume](pluralName, (uri / "detail").copy(query = query), extraHeaders*)
   
   /**
     * Deletes a volume.
@@ -55,4 +55,3 @@ final class Volumes[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
     */
   def delete(id: String, cascade: Boolean = false, force: Boolean = false): F[Unit] =
     super.delete((uri / id).withQueryParam("cascade", cascade).withQueryParam("force", force))
-}

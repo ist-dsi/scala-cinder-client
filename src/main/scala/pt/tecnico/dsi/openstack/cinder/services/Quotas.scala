@@ -38,7 +38,7 @@ final class Quotas[F[_]: Concurrent: Client](baseUri: Uri, session: Session) ext
     * Updates quotas for a project.
     * @param projectId The UUID of the project.
     */
-  def update(projectId: String, quotas: Quota.Update)(implicit encoder: Encoder[Quota.Update]): F[Quota] =
+  def update(projectId: String, quotas: Quota.Update)(using Encoder[Quota.Update]): F[Quota] =
     super.put(wrappedAt, quotas, uri / projectId)
   
   /**

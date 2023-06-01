@@ -2,31 +2,40 @@ package pt.tecnico.dsi.openstack.cinder.models
 
 import java.time.LocalDateTime
 import cats.{Applicative, derived}
+import cats.derived.derived
 import cats.derived.ShowPretty
-import io.circe.derivation.{deriveCodec, deriveDecoder, deriveEncoder, renaming}
-import io.circe.{Codec, Decoder, Encoder, JsonObject}
+import io.circe.derivation.{ConfiguredCodec, ConfiguredEncoder, ConfiguredDecoder, Configuration, renaming}
+import io.circe.{Decoder, Encoder, JsonObject}
 import pt.tecnico.dsi.openstack.common.models.{Identifiable, Link}
 import pt.tecnico.dsi.openstack.keystone.KeystoneClient
 import pt.tecnico.dsi.openstack.keystone.models.{Project, User}
 import squants.information.Information
 
-object Volume {
-  object Summary {
-    implicit val codec: Codec[Summary] = deriveCodec(renaming.snakeCase)
-    implicit val show: ShowPretty[Summary] = derived.semiauto.showPretty
-  }
+object Volume:
   case class Summary(
     id: String,
     name: String,
     links: List[Link] = List.empty,
-  ) extends Identifiable
+  ) extends Identifiable derives ConfiguredCodec, ShowPretty
 
-  object Create {
-    implicit val encoder: Encoder[Create] = Encoder.forProduct12(
-      "size", "availability_zone", "name", "description", "multiattach", "source_volid", "snapshot_id", "backup_id",
-      "imageRef", "volume_type", "metadata", "consistencygroup_id")(unapply(_).get)
-    implicit val show: ShowPretty[Create] = derived.semiauto.showPretty
-  }
+
+  val renames: Map[String, String] = Map(
+    "projectId" -> "os-vol-tenant-attr:tenant_id",
+    "type" -> "volume_type",
+    "imageId" -> "image_ref",
+    "multiAttach" -> "multiattach",
+    "sourceVolumeId" -> "source_volid",
+    "consistencyGroupId" -> "consistencygroup_id",
+    "host" -> "os-vol-host-attr:host",
+    "backendVolumeId" -> "os-vol-mig-status-attr:name_id",
+    // There are two fields for this: "migration_status" and "os-vol-mig-status-attr:migstat"
+    // "migration_status" is only for admins, "os-vol-mig-status-attr:migstat" seems to always be present and have the
+    // same value as the "migration_status"
+    "migrationStatus" -> "os-vol-mig-status-attr:migstat",
+  ).withDefault(renaming.snakeCase)
+
+  given Configuration = Configuration.default.withDefaults.withTransformMemberNames(renames)
+
   /**
     * @param size the size of the volume, in gibibytes (GiB).
     * @param availabilityZone the availability zone where the volume will be created.
@@ -60,12 +69,8 @@ object Volume {
     `type`: Option[String] = None,
     metadata: Map[String, String] = Map.empty,
     consistencyGroupId: Option[String] = None,
-  )
+  ) derives ConfiguredEncoder, ShowPretty
   
-  object Update {
-    implicit val encoder: Encoder[Update] = deriveEncoder(renaming.snakeCase)
-    implicit val show: ShowPretty[Update] = derived.semiauto.showPretty
-  }
   /**
     * @param name the volume name.
     * @param description the volume description.
@@ -75,31 +80,15 @@ object Volume {
     name: Option[String] = None,
     description: Option[String] = None,
     metadata: Map[String, String] = Map.empty,
-  )
-  
-  val renames: Map[String, String] = Map(
-    "projectId" -> "os-vol-tenant-attr:tenant_id",
-    "type" -> "volume_type",
-    "multiAttach" -> "multiattach",
-    "sourceVolumeId" -> "source_volid",
-    "consistencyGroupId" -> "consistencygroup_id",
-    "host" -> "os-vol-host-attr:host",
-    "backendVolumeId" -> "os-vol-mig-status-attr:name_id",
-    // There are two fields for this: "migration_status" and "os-vol-mig-status-attr:migstat"
-    // "migration_status" is only for admins, "os-vol-mig-status-attr:migstat" seems to always be present and have the
-    // same value as the "migration_status"
-    "migrationStatus" -> "os-vol-mig-status-attr:migstat",
-  ).withDefault(renaming.snakeCase)
-  implicit val decoder: Decoder[Volume] = deriveDecoder[Volume](renames).prepare(_.withFocus(_ mapObject{ obj =>
-    import io.circe.syntax._
+  ) derives ConfiguredEncoder, ShowPretty
+
+  given Decoder[Volume] = ConfiguredDecoder.derived[Volume].prepare(_.withFocus(_ mapObject{ obj =>
+    import io.circe.syntax.*
     val key = "bootable"
     // Yes, in the Json it is a boolean inside a string :facepalm:
     val value: Boolean = obj(key).flatMap(_.asString).flatMap(_.toBooleanOption).getOrElse(false)
     obj.add(key, value.asJson)
   }))
-  implicit val encoder: Encoder[Volume] = deriveEncoder(renaming.snakeCase)
-  implicit val show: ShowPretty[Volume] = derived.semiauto.showPretty
-}
 
 /**
   * @param name                the volume name.
@@ -153,10 +142,9 @@ case class Volume(
   createdAt: LocalDateTime,
   updatedAt: Option[LocalDateTime] = None,
   links: List[Link] = List.empty,
-) extends Identifiable {
-  def user[F[_]](implicit keystone: KeystoneClient[F]): F[User] = keystone.users(userId)
-  def project[F[_]: Applicative](implicit keystone: KeystoneClient[F]): F[Option[Project]] = projectId match {
+) extends Identifiable derives ConfiguredEncoder, ShowPretty {
+  def user[F[_]](using keystone: KeystoneClient[F]): F[User] = keystone.users(userId)
+  def project[F[_]: Applicative](using keystone: KeystoneClient[F]): F[Option[Project]] = projectId match
     case None => Applicative[F].pure(Option.empty)
     case Some(id) => keystone.projects.get(id)
-  }
 }
