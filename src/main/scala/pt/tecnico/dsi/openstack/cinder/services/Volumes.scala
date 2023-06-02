@@ -31,20 +31,20 @@ final class Volumes[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
     *
     * @param query extra query params to pass in the request.
     */
-  def listSummary(query: Query = Query.empty): F[List[Volume.Summary]] = super.list[Volume.Summary](pluralName, uri.copy(query = query))
+  def listSummary(query: Query = Query.empty): F[List[Volume.Summary]] = super.list(pluralName, uri.copy(query = query))
   
   /**
     * Streams summary information for all Block Storage volumes that the project can access.
     *
     * @param query extra query params to pass in the request.
     */
-  def streamSummary(query: Query = Query.empty): Stream[F, Volume.Summary] = super.stream[Volume.Summary](pluralName, uri.copy(query = query))
+  def streamSummary(query: Query = Query.empty): Stream[F, Volume.Summary] = super.stream(pluralName, uri.copy(query = query))
   
   override def list(query: Query, extraHeaders: Header.ToRaw*): F[List[Volume]] =
-    super.list[Volume](pluralName, (uri / "detail").copy(query = query), extraHeaders*)
+    super.list(pluralName, (uri / "detail").copy(query = query), extraHeaders*)
   
   override def stream(query: Query, extraHeaders: Header.ToRaw*): fs2.Stream[F, Volume] =
-    super.stream[Volume](pluralName, (uri / "detail").copy(query = query), extraHeaders*)
+    super.stream(pluralName, (uri / "detail").copy(query = query), extraHeaders*)
   
   /**
     * Deletes a volume.

@@ -30,7 +30,7 @@ Test / console / scalacOptions := (Compile / console / scalacOptions).value
 // ==== Dependencies ====================================================================================================
 // ======================================================================================================================
 libraryDependencies ++= Seq(
-  "pt.tecnico.dsi"  %% "scala-keystone-client" % "0.12.0",
+  "pt.tecnico.dsi"  %% "scala-keystone-client" % "0.12.2",
   "org.typelevel"   %% "squants"               % "1.8.3",
   "ch.qos.logback"   % "logback-classic"       % "1.4.7" % Test,
   "org.scalatest"   %% "scalatest"             % "3.2.16" % Test,
